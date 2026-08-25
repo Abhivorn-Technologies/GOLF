@@ -12,15 +12,50 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Custom Slider Styling */
+.custom-slider {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  background: transparent !important;
+  pointer-events: none;
+}
+
+.custom-slider::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  pointer-events: auto;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background-color: #006747;
+  cursor: pointer;
+  transition: transform 0.1s ease-in-out;
+}
+
+.custom-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+.custom-slider::-moz-range-thumb {
+  pointer-events: auto;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background-color: #006747;
+  cursor: pointer;
+  transition: transform 0.1s ease-in-out;
+  border: none;
+}
+
+.custom-slider::-moz-range-thumb:hover {
+  transform: scale(1.1);
+}
+

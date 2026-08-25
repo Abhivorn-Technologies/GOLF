@@ -1,0 +1,34 @@
+"use client";
+
+import React, { useState } from 'react';
+import { Plus, Check } from 'lucide-react';
+import { useCart } from '@/context/CartContext';
+
+export default function QuickAddOverlay({ product }: { product: any }) {
+  const { addToCart } = useCart();
+  const [added, setAdded] = useState(false);
+
+  const handleQuickAdd = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Quick Add adds 1 quantity
+    addToCart(product, 1, {});
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
+  };
+
+  return (
+    <>
+      <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent pointer-events-none transition-colors duration-300"></div>
+      <div className="absolute inset-x-4 bottom-4 translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 z-10">
+        <button 
+          onClick={handleQuickAdd}
+          className="w-full bg-white hover:bg-zinc-900 hover:text-white text-zinc-900 font-bold py-3 px-4 rounded-lg shadow-lg flex items-center justify-center gap-2 transition-colors uppercase tracking-wide text-xs"
+        >
+          {added ? <><Check className="w-4 h-4" /> Added</> : <><Plus className="w-4 h-4" /> Quick Add</>}
+        </button>
+      </div>
+    </>
+  );
+}
