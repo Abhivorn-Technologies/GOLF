@@ -13,6 +13,8 @@ export interface ProductType {
   size?: string;
   description?: string;
   features?: string[];
+  slug?: string;
+  _id?: string | any;
 }
 
 export const ALL_PRODUCTS: ProductType[] = [

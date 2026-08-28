@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Search, ShoppingCart, User, HelpCircle, Menu, X, ChevronDown, ChevronRight } from 'lucide-react';
+import { Search, ShoppingCart, User, Heart, Menu, X, ChevronDown, ChevronRight } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 export default function TopNavBar({ megaMenuData = {} }: { megaMenuData?: Record<string, any> }) {
   const { cartCount } = useCart();
@@ -15,6 +15,7 @@ export default function TopNavBar({ megaMenuData = {} }: { megaMenuData?: Record
   const [expandedMobileCategory, setExpandedMobileCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
+  const pathname = usePathname();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,29 +53,26 @@ export default function TopNavBar({ megaMenuData = {} }: { megaMenuData?: Record
           {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
 
-        <Link href="/" className="flex-shrink-0 flex items-center">
-          <img src="/images/golf.png" alt="GolfPro Logo" className="h-8 md:h-10 w-auto object-contain scale-[1.5] md:scale-[1.8] translate-x-2 md:translate-x-4" />
+        <Link href="/" className="flex-shrink-0 flex items-center relative">
+          <img src="/images/golf.png" alt="GolfPro Logo" className="h-10 md:h-12 w-auto object-contain scale-[1.5] md:scale-[2.0] translate-x-8 md:translate-x-12 origin-left" />
         </Link>
 
         {/* Search Bar */}
-        <form onSubmit={handleSearch} className="flex-grow max-w-2xl hidden md:flex items-center relative">
+        <form onSubmit={handleSearch} className="flex-grow max-w-2xl hidden md:flex items-center relative mx-8">
           <input 
             type="text" 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="What are you looking for?" 
-            className="w-full py-3 px-6 pr-12 rounded-full border border-gray-300 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+            placeholder="Search for clubs, shoes, apparel..." 
+            className="w-full py-3 px-6 pr-12 rounded-full border border-gray-200 bg-gray-50/50 hover:bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all shadow-sm"
           />
-          <button type="submit" className="absolute right-4 text-gray-400 hover:text-green-600">
+          <button type="submit" className="absolute right-4 text-gray-400 hover:text-black transition-colors">
             <Search className="w-5 h-5" />
           </button>
         </form>
 
         {/* Trailing Actions */}
         <div className="flex items-center space-x-4 md:space-x-6 flex-shrink-0">
-          <button className="hidden sm:flex items-center space-x-2 text-zinc-700 hover:text-green-600 transition-colors">
-            <HelpCircle className="w-6 h-6" />
-          </button>
           
           {status === 'loading' ? (
             <div className="w-6 h-6 animate-pulse bg-gray-200 rounded-full"></div>
@@ -91,6 +89,11 @@ export default function TopNavBar({ megaMenuData = {} }: { megaMenuData?: Record
               <span className="hidden lg:block font-medium text-sm">Account</span>
             </Link>
           )}
+
+          <Link href="/account/wishlist" className="hidden sm:flex items-center space-x-2 text-zinc-700 hover:text-green-600 transition-colors">
+            <Heart className="w-6 h-6" />
+          </Link>
+
           <Link href="/cart" className="flex items-center space-x-2 text-zinc-700 hover:text-green-600 transition-colors relative">
             <ShoppingCart className="w-6 h-6" />
             <span className="absolute -top-1 -right-2 bg-green-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
@@ -103,21 +106,29 @@ export default function TopNavBar({ megaMenuData = {} }: { megaMenuData?: Record
       {/* Bottom Row: Navigation Links */}
       <nav className="bg-white px-8 hidden md:block relative">
         <div className="max-w-7xl mx-auto flex items-center justify-center space-x-8 lg:space-x-12">
-          {navLinks.map((item) => (
+          {navLinks.map((item) => {
+            const itemPath = item === 'Home' ? '/' : `/category/${item.toLowerCase()}`;
+            const isActive = pathname === itemPath || (item !== 'Home' && pathname.startsWith(itemPath));
+
+            return (
             <div 
               key={item} 
               onMouseEnter={() => setHoveredCategory(item)}
               className="py-4"
             >
               <Link 
-                href={item === 'Home' ? '/' : `/category/${item.toLowerCase()}`}
-                className={`text-sm font-semibold tracking-wide uppercase transition-colors flex items-center gap-1
-                  ${hoveredCategory === item ? 'text-green-600' : 'text-zinc-800 hover:text-green-600'}`}
+                href={itemPath}
+                className={`text-sm font-semibold tracking-wide uppercase transition-colors flex items-center gap-1 relative
+                  ${hoveredCategory === item || isActive ? 'text-black' : 'text-zinc-500 hover:text-black'}`}
               >
                 {item}
+                {isActive && (
+                  <span className="absolute -bottom-[22px] left-0 w-full h-[2px] bg-black rounded-t-full"></span>
+                )}
               </Link>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Mega Menu Dropdown */}
@@ -184,7 +195,7 @@ export default function TopNavBar({ megaMenuData = {} }: { megaMenuData?: Record
                       {attrValues.slice(0, 8).map((val: any) => (
                         <li key={val.name}>
                           <Link 
-                            href={`/category/${hoveredCategory.toLowerCase()}?attributes=${encodeURIComponent(JSON.stringify({[attrKey]: [val.name]}))}`}
+                            href={`/category/${hoveredCategory.toLowerCase()}?${attrKey.toLowerCase()}=${encodeURIComponent(val.name)}`}
                             className="text-gray-600 hover:text-green-600 text-sm transition-colors block"
                             onClick={() => setHoveredCategory(null)}
                           >

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
-import connectMongo from '@/lib/db';
+import dbConnect from '@/lib/mongodb';
 import Order from '@/models/Order';
 import { getServerSession } from 'next-auth/next';
 
@@ -11,8 +11,7 @@ export async function GET(req: Request) {
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    await connectMongo();
+    await dbConnect();
     
     const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({ email: String }));
     const user = await User.findOne({ email: session.user.email });

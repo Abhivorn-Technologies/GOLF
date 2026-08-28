@@ -114,11 +114,16 @@ export default function Footer() {
 
           {/* Support */}
           <div className="lg:col-span-3 md:col-span-1">
-            <h4 className="text-white text-sm font-bold uppercase tracking-wider mb-6">Support</h4>
+            <h4 className="text-white text-sm font-bold uppercase tracking-wider mb-6">Support & Info</h4>
             <ul className="space-y-4">
               {[
                 { name: 'My Account', path: '/account' },
-                { name: 'Order Tracking', path: '/account/orders' }
+                { name: 'Order Tracking', path: '/account/orders' },
+                { name: 'About GolfPro', path: '/about' },
+                { name: 'Shipping Policy', path: '/shipping' },
+                { name: '100-Day Guarantee', path: '/guarantee' },
+                { name: 'Privacy Policy', path: '/privacy' },
+                { name: 'Terms of Service', path: '/terms' }
               ].map((link) => (
                 <li key={link.name}>
                   <Link href={link.path} className="text-zinc-400 hover:text-green-400 hover:translate-x-1 flex items-center gap-2 text-sm transition-all group">

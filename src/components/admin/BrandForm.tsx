@@ -11,7 +11,16 @@ export default function BrandForm({ initialData }: { initialData?: any }) {
   const [error, setError] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(initialData?.imageUrl || null);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(initialData?.categories || []);
   const [isMounted, setIsMounted] = useState(false);
+
+  const availableCategories = ['accessories', 'apparel', 'bags', 'balls', 'clubs', 'shoes'];
+
+  const handleCategoryToggle = (category: string) => {
+    setSelectedCategories(prev => 
+      prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]
+    );
+  };
 
   React.useEffect(() => {
     setIsMounted(true);
@@ -58,6 +67,7 @@ export default function BrandForm({ initialData }: { initialData?: any }) {
         imageUrl: imageUrl,
         isActive: formData.get('isActive') === 'on',
         displayOrder: Number(formData.get('displayOrder')) || 0,
+        categories: selectedCategories,
       };
 
       if (!brandData.name) throw new Error('Brand name is required');
@@ -126,6 +136,23 @@ export default function BrandForm({ initialData }: { initialData?: any }) {
           <div className="flex items-center gap-3">
             <input type="checkbox" name="isActive" id="isActive" defaultChecked={initialData?.isActive !== false} className="w-5 h-5 rounded text-black focus:ring-black" />
             <label htmlFor="isActive" className="text-sm font-medium text-gray-700">Brand is Active</label>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">Categories</label>
+            <div className="grid grid-cols-2 gap-3">
+              {availableCategories.map(cat => (
+                <label key={cat} className="flex items-center gap-2 cursor-pointer p-3 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={selectedCategories.includes(cat)}
+                    onChange={() => handleCategoryToggle(cat)}
+                    className="w-4 h-4 text-black focus:ring-black rounded"
+                  />
+                  <span className="text-sm text-gray-900 capitalize">{cat}</span>
+                </label>
+              ))}
+            </div>
           </div>
         </div>
 

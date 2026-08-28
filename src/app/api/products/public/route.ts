@@ -7,12 +7,16 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1', 10) || 1;
+    const limit = parseInt(searchParams.get('limit') || '12', 10) || 12;
+    const skip = (page - 1) * limit;
+
     const category = searchParams.get('category');
     const minPrice = searchParams.get('minPrice');
     const maxPrice = searchParams.get('maxPrice');
-    const brands = searchParams.getAll('brand');
-    const styles = searchParams.getAll('style');
-    const genders = searchParams.getAll('gender');
+    const brands = searchParams.getAll('brand').filter(b => b.trim() !== '');
+    const styles = searchParams.getAll('style').filter(s => s.trim() !== '');
+    const genders = searchParams.getAll('gender').filter(g => g.trim() !== '');
 
     const saleOnly = searchParams.get('sale');
 
@@ -29,6 +33,10 @@ export async function GET(request: Request) {
     if (saleOnly === 'true') {
       // Find where compareAtPrice exists and is strictly greater than price
       query.$expr = { $gt: ["$compareAtPrice", "$price"] };
+    }
+
+    if (searchParams.get('newArrivals') === 'true') {
+      query.isNewArrival = true;
     }
 
     if (minPrice || maxPrice) {
@@ -50,13 +58,55 @@ export async function GET(request: Request) {
       query.gender = { $in: genders.map(g => new RegExp('^' + g + '$', 'i')) };
     }
 
-    const products = await Product.find(query).sort({ createdAt: -1 });
+    const staticFields = ['category', 'minPrice', 'maxPrice', 'brand', 'style', 'gender', 'sale', 'newArrivals', 'type', 'loft', 'size', 'page', 'limit'];
+    
+    // Explicitly handle fields that might be capitalized in searchParams but are lowercase in DB
+    const lowerCaseSearchKeys = Array.from(searchParams.keys()).map(k => k.toLowerCase());
+    
+    ['type', 'loft', 'size'].forEach(field => {
+      // Find all keys that match case-insensitively
+      const matchingKeys = Array.from(searchParams.keys()).filter(k => k.toLowerCase() === field);
+      let values: string[] = [];
+      matchingKeys.forEach(k => {
+        values = values.concat(searchParams.getAll(k).filter(v => v.trim() !== ''));
+      });
+      if (values.length > 0) {
+        query[field] = { $in: values.map(v => new RegExp('^' + v + '$', 'i')) };
+      }
+    });
+
+    // Dynamically parse custom attributes (stored in the attributes array in DB)
+    for (const [key, value] of searchParams.entries()) {
+      if (!staticFields.includes(key.toLowerCase())) {
+        const values = searchParams.getAll(key).filter(v => v.trim() !== '');
+        if (values.length > 0) {
+          if (!query.$and) query.$and = [];
+          query.$and.push({
+            attributes: {
+              $elemMatch: {
+                key: new RegExp('^' + key + '$', 'i'),
+                value: { $in: values.map(v => new RegExp('^' + v + '$', 'i')) }
+              }
+            }
+          });
+        }
+      }
+    }
+
+    const totalItems = await Product.countDocuments(query);
+    const totalPages = Math.ceil(totalItems / limit);
+
+    const products = await Product.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
     // Transform MongoDB _id to string id to match existing ProductType format
     const transformedProducts = products.map((p) => {
       const doc = p.toObject();
       return {
         id: doc._id.toString(),
+        slug: doc.slug,
         name: doc.title,
         brand: doc.brand,
         price: `₹${doc.price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
@@ -75,7 +125,16 @@ export async function GET(request: Request) {
       };
     });
 
-    return NextResponse.json({ success: true, data: transformedProducts });
+    return NextResponse.json({ 
+      success: true, 
+      data: transformedProducts,
+      pagination: {
+        totalItems,
+        totalPages,
+        currentPage: page,
+        pageSize: limit
+      }
+    });
   } catch (error: any) {
     console.error('Error fetching public products:', error);
     return NextResponse.json(

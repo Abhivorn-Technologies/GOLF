@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
-import connectMongo from '@/lib/db';
+import dbConnect from '@/lib/mongodb';
 import Order from '@/models/Order';
 import Product from '@/models/Product';
 import { getServerSession } from 'next-auth/next';
 
 export async function POST(req: Request) {
   try {
-    await connectMongo();
+    await dbConnect();
     
     const session = await getServerSession();
     

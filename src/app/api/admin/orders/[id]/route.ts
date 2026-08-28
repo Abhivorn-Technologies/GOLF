@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
-import connectMongo from '@/lib/db';
+import dbConnect from '@/lib/mongodb';
 import Order from '@/models/Order';
 import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key-change-in-production';
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const cookieStore = await cookies();
     const adminToken = cookieStore.get('admin_token')?.value;
@@ -22,12 +22,13 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    await connectMongo();
+    await dbConnect();
     
     const body = await req.json();
     const { shippingStatus, paymentStatus } = body;
 
-    const order = await Order.findById(params.id);
+    const { id } = await params;
+    const order = await Order.findById(id);
     if (!order) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }

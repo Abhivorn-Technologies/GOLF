@@ -26,7 +26,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     }
     
     return NextResponse.json(updatedProduct, { status: 200 });
-  } catch (error) {
+  } catch (error: any) {
+    console.error("Product update error:", error);
+    require('fs').writeFileSync('last_error.log', error.stack || error.toString());
     return NextResponse.json({ error: 'Failed to update product' }, { status: 500 });
   }
 }

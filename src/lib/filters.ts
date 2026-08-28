@@ -3,7 +3,7 @@ import Product from "@/models/Product";
 import { ALL_PRODUCTS } from "@/data/products";
 
 export async function getMegaMenuData() {
-  let dbProducts = [];
+  let dbProducts: any[] = [];
   try {
     await dbConnect();
     dbProducts = await Product.find({}).lean();
@@ -32,12 +32,18 @@ export async function getMegaMenuData() {
     const data = megaMenuData[catMatch];
     
     if (product.brand) {
-      data.brands[product.brand] = (data.brands[product.brand] || 0) + 1;
+      const brandStr = product.brand.trim();
+      const existingKey = Object.keys(data.brands).find(k => k.toLowerCase() === brandStr.toLowerCase());
+      const keyToUse = existingKey || brandStr;
+      data.brands[keyToUse] = (data.brands[keyToUse] || 0) + 1;
     }
     
     if (product.gender) {
       if (!data.attributes['Gender']) data.attributes['Gender'] = {};
-      data.attributes['Gender'][product.gender] = (data.attributes['Gender'][product.gender] || 0) + 1;
+      const genderStr = product.gender.trim();
+      const existingKey = Object.keys(data.attributes['Gender']).find(k => k.toLowerCase() === genderStr.toLowerCase());
+      const keyToUse = existingKey || genderStr;
+      data.attributes['Gender'][keyToUse] = (data.attributes['Gender'][keyToUse] || 0) + 1;
     }
     
     const staticAttrs = ['style', 'type', 'loft', 'size'];
@@ -47,17 +53,30 @@ export async function getMegaMenuData() {
         if (!data.attributes[capitalized]) data.attributes[capitalized] = {};
         const values = typeof product[attr] === 'string' ? product[attr].split(',').map((v: string) => v.trim()) : [product[attr]];
         values.forEach((v: string) => {
-          if(v) data.attributes[capitalized][v] = (data.attributes[capitalized][v] || 0) + 1;
+          if(v) {
+            const existingKey = Object.keys(data.attributes[capitalized]).find(k => k.toLowerCase() === v.toLowerCase());
+            const keyToUse = existingKey || v;
+            data.attributes[capitalized][keyToUse] = (data.attributes[capitalized][keyToUse] || 0) + 1;
+          }
         });
       }
     });
     
     if (product.attributes && Array.isArray(product.attributes)) {
       product.attributes.forEach((attr: any) => {
-        if (!data.attributes[attr.key]) data.attributes[attr.key] = {};
+        const attrKeyStr = attr.key.trim();
+        const existingAttrKey = Object.keys(data.attributes).find(k => k.toLowerCase() === attrKeyStr.toLowerCase());
+        const attrKeyToUse = existingAttrKey || attrKeyStr;
+        
+        if (!data.attributes[attrKeyToUse]) data.attributes[attrKeyToUse] = {};
+        
         const values = typeof attr.value === 'string' ? attr.value.split(',').map((v: string) => v.trim()) : [attr.value];
         values.forEach((v: string) => {
-           if(v) data.attributes[attr.key][v] = (data.attributes[attr.key][v] || 0) + 1;
+           if(v) {
+             const existingKey = Object.keys(data.attributes[attrKeyToUse]).find(k => k.toLowerCase() === v.toLowerCase());
+             const keyToUse = existingKey || v;
+             data.attributes[attrKeyToUse][keyToUse] = (data.attributes[attrKeyToUse][keyToUse] || 0) + 1;
+           }
         });
       });
     }

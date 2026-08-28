@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
-import connectMongo from '@/lib/db';
+import dbConnect from '@/lib/mongodb';
 import Order from '@/models/Order';
 import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
@@ -21,8 +21,7 @@ export async function GET(req: Request) {
     } catch (e) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
-
-    await connectMongo();
+    await dbConnect();
     
     // Fetch orders, populate product details, sort by newest first
     // Note: We use .lean() to get a plain JS object, and mongoose will populate if schema allows.

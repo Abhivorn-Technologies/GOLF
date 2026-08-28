@@ -12,7 +12,9 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Users
+  Users,
+  Filter,
+  Settings
 } from 'lucide-react';
 
 const navItems = [
@@ -22,6 +24,8 @@ const navItems = [
   { name: 'Customers', href: '/admin/customers', icon: Users },
   { name: 'Banners', href: '/admin/banners', icon: ImageIcon },
   { name: 'Brands', href: '/admin/brands', icon: ImageIcon },
+  { name: 'Filters', href: '/admin/category-settings', icon: Filter },
+  { name: 'Settings', href: '/admin/settings', icon: Settings },
 ];
 
 export default function AdminSidebar() {

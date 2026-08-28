@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Heart } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import toast from 'react-hot-toast';
 
 export default function WishlistButton({ productId }: { productId: string }) {
   const { data: session } = useSession();
@@ -13,7 +14,7 @@ export default function WishlistButton({ productId }: { productId: string }) {
     e.stopPropagation();
 
     if (!session) {
-      alert("Please login to add to wishlist!");
+      toast.error("Please login to add to wishlist!");
       return;
     }
     
@@ -25,11 +26,12 @@ export default function WishlistButton({ productId }: { productId: string }) {
       });
       if (res.ok) {
         setAdded(true);
+        toast.success("Added to wishlist!");
       } else {
-        alert("Could not update wishlist.");
+        toast.error("Could not update wishlist.");
       }
     } catch (e) {
-      alert("Error adding to wishlist");
+      toast.error("Error adding to wishlist");
     }
   };
 

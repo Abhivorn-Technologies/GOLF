@@ -4,7 +4,8 @@ const BrandSchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true },
   imageUrl: { type: String, required: true },
   isActive: { type: Boolean, default: true },
-  displayOrder: { type: Number, default: 0 }
+  displayOrder: { type: Number, default: 0 },
+  categories: { type: [String], default: [] }
 }, { timestamps: true });
 
 // Clear cache in development to ensure schema updates take effect

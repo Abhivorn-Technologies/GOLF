@@ -28,9 +28,28 @@ export async function POST(req: NextRequest) {
   await dbConnect();
   try {
     const body = await req.json();
+    
+    if (body.title && !body.slug) {
+      let baseSlug = body.title.toString().toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^\w\-]+/g, '')
+        .replace(/\-\-+/g, '-')
+        .replace(/^-+/, '')
+        .replace(/-+$/, '');
+      let newSlug = baseSlug;
+      let counter = 1;
+      while (await Product.findOne({ slug: newSlug })) {
+        newSlug = `${baseSlug}-${counter}`;
+        counter++;
+      }
+      body.slug = newSlug;
+    }
+
     const newProduct = await Product.create(body);
     return NextResponse.json(newProduct, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
+    console.error("Product creation error:", error);
+    require('fs').writeFileSync('last_error.log', error.stack || error.toString());
     return NextResponse.json({ error: 'Failed to create product' }, { status: 500 });
   }
 }

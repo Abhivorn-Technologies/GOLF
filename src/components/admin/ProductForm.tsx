@@ -72,10 +72,17 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
           const imageFormData = new FormData();
           imageFormData.append('file', file);
           
-          const uploadRes = await fetch('/api/admin/upload', {
-            method: 'POST',
-            body: imageFormData
-          });
+          let uploadRes;
+          try {
+            uploadRes = await fetch('/api/admin/upload', {
+              method: 'POST',
+              body: imageFormData
+            });
+          } catch (uploadErr) {
+            console.warn('Image upload network error. API not available or payload too large.', uploadErr);
+            finalImageUrls.push(`/images/${file.name}`);
+            continue;
+          }
           
           if (!uploadRes.ok) {
             finalImageUrls.push(`/images/${file.name}`);
@@ -120,13 +127,21 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
       const url = initialData ? `/api/admin/products/${initialData._id}` : '/api/admin/products';
       const method = initialData ? 'PUT' : 'POST';
 
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(productData),
-      });
+      let res;
+      try {
+        res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(productData),
+        });
+      } catch (fetchErr) {
+        throw new Error('Network error: Could not reach the server to save the product.');
+      }
 
-      if (!res.ok) throw new Error('Failed to save product');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to save product on the server.');
+      }
 
       router.push('/admin/products');
       router.refresh();
@@ -219,8 +234,9 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
-              <select name="gender" defaultValue={initialData?.gender || "Men's"} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-black focus:ring-2 focus:ring-gray-200 transition-all outline-none bg-white">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Gender (Optional)</label>
+              <select name="gender" defaultValue={initialData?.gender || ""} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-black focus:ring-2 focus:ring-gray-200 transition-all outline-none bg-white">
+                <option value="">None / Not Applicable</option>
                 <option value="Men's">Men's</option>
                 <option value="Women's">Women's</option>
                 <option value="Unisex">Unisex</option>
