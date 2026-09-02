@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 interface Category {
   id: string;
@@ -18,38 +18,41 @@ export default function CategoryShopByCategory({ categories = [] }: { categories
     { 
       id: '1',
       name: 'DRIVERS', 
-      desc: 'Maximum distance Unmatched power', 
+      desc: 'Maximum distance\nUnmatched power', 
       href: '/category/clubs?type=Drivers',
       color: 'from-blue-500/20 to-blue-900/40' 
     },
     { 
       id: '2',
       name: 'IRONS', 
-      desc: 'Precision & control For every shot', 
+      desc: 'Precision & control\nFor every shot', 
       href: '/category/clubs?type=Irons',
       color: 'from-zinc-500/20 to-zinc-900/40' 
     },
     { 
       id: '3',
       name: 'FAIRWAY WOODS', 
-      desc: 'Longer shots Better control', 
+      desc: 'Longer shots\nBetter control', 
       href: '/category/clubs?type=Fairway+Woods',
       color: 'from-emerald-500/20 to-emerald-900/40' 
     },
     { 
       id: '4',
       name: 'COMPLETE SETS', 
-      desc: 'Everything you need Play complete', 
+      desc: 'Everything you need\nPlay complete', 
       href: '/category/clubs?type=Complete+Sets',
       color: 'from-purple-500/20 to-purple-900/40' 
     }
   ];
 
   return (
-    <div className="w-full mb-16">
-      <div className="flex flex-col items-center mb-12">
-        <h2 className="text-3xl font-black text-zinc-900 tracking-tight uppercase mb-4">SHOP BY CATEGORY</h2>
-        <div className="w-12 h-1 bg-green-600 rounded-full"></div>
+    <div className="w-full mb-20">
+      <div className="flex items-center justify-center mb-12 gap-4">
+        <div className="w-8 md:w-16 h-[2px] bg-[#6cb42c]"></div>
+        <h2 className="text-2xl md:text-3xl font-extrabold text-black font-serif tracking-wider uppercase">
+          SHOP BY CATEGORY
+        </h2>
+        <div className="w-8 md:w-16 h-[2px] bg-[#6cb42c]"></div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -59,31 +62,46 @@ export default function CategoryShopByCategory({ categories = [] }: { categories
           const filterVal = cat.name?.split(' ').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ') || '';
           const targetHref = (cat.href && cat.href.trim() !== '') ? cat.href : `?type=${encodeURIComponent(filterVal)}`;
 
+          // Format description for natural breaking if it doesn't already have newlines
+          let formattedDesc = cat.desc;
+          if (!formattedDesc.includes('\n')) {
+             // Basic heuristic to break at uppercase letters if missing newlines
+             formattedDesc = formattedDesc.replace(/([a-z])([A-Z])/g, '$1\n$2');
+          }
+
           return (
-          <Link key={cat.id} href={targetHref} scroll={false} className="group relative h-[320px] rounded-2xl overflow-hidden bg-zinc-100 flex flex-col justify-end p-6 border border-gray-200 transition-all duration-300 hover:border-[#006747] hover:shadow-lg">
+          <Link key={cat.id} href={targetHref} scroll={false} className="group relative h-[280px] bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-row p-6 hover:border-[#004f32] transition-all duration-300 hover:shadow-xl">
             
-            <div className="absolute top-6 left-6 w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm text-zinc-400 group-hover:text-[#006747] transition-colors z-10">
-              <span className="font-bold text-lg">{cat.name?.charAt(0) || 'C'}</span>
-            </div>
-
-            {cat.image ? (
-              <img src={cat.image} alt={cat.name} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500 z-0" />
-            ) : (
-              <div className={`absolute inset-0 bg-gradient-to-br ${cat.color || 'from-gray-200 to-gray-300'} opacity-40 group-hover:opacity-60 transition-opacity duration-300 z-0`}></div>
-            )}
-            <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors z-0"></div>
-
-            <div className="relative z-20 flex justify-between items-end bg-white/90 backdrop-blur-sm p-4 rounded-xl border border-white/50 group-hover:bg-white transition-colors">
-              <div className="flex-1 pr-2">
-                <h3 className="text-xl font-bold text-[#1b1c1c] uppercase tracking-tight mb-1 group-hover:text-[#006747] transition-colors">
-                  {cat.name}
-                </h3>
-                <p className="text-xs text-[#717b71] font-medium leading-snug">{cat.desc}</p>
+            {/* Left Content */}
+            <div className="relative z-10 w-[55%] flex flex-col h-full">
+              <div className="w-8 h-8 bg-[#114028] rounded-full flex items-center justify-center text-white font-serif mb-6 shadow-sm">
+                <span className="text-xs font-medium">{cat.name?.charAt(0) || 'C'}</span>
               </div>
-              <div className="bg-zinc-100 p-2 shrink-0 rounded-full text-zinc-400 group-hover:bg-[#006747] group-hover:text-white transition-all transform group-hover:rotate-12 group-hover:scale-110 shadow-sm">
-                <ArrowUpRight className="w-5 h-5" />
+              
+              <h3 className="text-lg font-extrabold text-black uppercase font-serif tracking-wide mb-2 group-hover:text-[#114028] transition-colors leading-tight">
+                {cat.name}
+              </h3>
+              
+              <div className="text-[12px] text-gray-500 font-serif leading-snug mb-auto whitespace-pre-line">
+                {formattedDesc}
+              </div>
+              
+              <div className="mt-auto">
+                <div className="w-8 h-8 border border-gray-200 rounded-full flex items-center justify-center group-hover:border-[#114028] transition-colors">
+                  <ArrowRight className="w-4 h-4 text-gray-600 group-hover:text-[#114028] transition-colors" />
+                </div>
               </div>
             </div>
+
+            {/* Right Image */}
+            <div className="absolute right-0 bottom-4 w-[55%] h-[75%] flex items-end justify-end pointer-events-none z-0">
+              {cat.image ? (
+                <img src={cat.image} alt={cat.name} className="w-full h-full object-contain object-right-bottom group-hover:scale-110 transition-transform duration-500" />
+              ) : (
+                <div className={`w-full h-full bg-gradient-to-br ${cat.color || 'from-gray-100 to-gray-200'} opacity-20 rounded-l-full`}></div>
+              )}
+            </div>
+
           </Link>
         )})}
       </div>

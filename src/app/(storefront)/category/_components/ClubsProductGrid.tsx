@@ -49,8 +49,8 @@ export default function ClubsProductGrid() {
   return (
     <div className="flex-1 pb-[120px]">
       
-      {/* Product Grid - 2 Column Layout as per Figma */}
-      <div className={`grid grid-cols-1 md:grid-cols-2 gap-x-[32px] gap-y-[32px] mb-[48px] transition-opacity duration-200 ${loading ? 'opacity-50' : 'opacity-100'}`}>
+      {/* Product Grid - 3 Column Layout */}
+      <div className={`grid grid-cols-2 md:grid-cols-3 gap-x-[32px] gap-y-[32px] mb-[48px] transition-opacity duration-200 ${loading ? 'opacity-50' : 'opacity-100'}`}>
         {products.length > 0 ? (
           products.map((product) => (
             <ProductCard key={product.id} product={product} />))

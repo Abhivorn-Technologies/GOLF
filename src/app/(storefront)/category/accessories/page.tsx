@@ -9,7 +9,6 @@ export const metadata: Metadata = {
 import BrandsWeLove from "@/app/(storefront)/_components/BrandsWeLove";
 import AccessoriesSidebarFilter from "@/app/(storefront)/category/_components/AccessoriesSidebarFilter";
 import CategoryProductGrid from "@/app/(storefront)/_components/CategoryProductGrid";
-import CategoryHero from "@/app/(storefront)/category/_components/CategoryHero";
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -17,17 +16,11 @@ export const revalidate = 0;
 export default function AccessoriesCategoryPage() {
   return (
     <main className="min-h-screen bg-[#fbf9f9] flex flex-col font-sans">
-      <CategoryHero 
-        title="Accessories" 
-        description="Everything you need to complete your golf bag and elevate your game."
-      />
-
       <div className="max-w-[1280px] mx-auto px-6 py-[48px] w-full">
-        <h2 className="text-[28px] font-serif font-semibold text-[#1b1c1c] mb-[32px]">GOLF ACCESSORIES</h2>
 
         <BrandsWeLove category="accessories" />
 
-        <div className="flex gap-[32px] items-start mt-[16px]">
+        <div className="flex flex-col lg:flex-row gap-[32px] items-start mt-[16px] w-full">
           <React.Suspense fallback={<div className="w-[256px] shrink-0 bg-[#fbf9f9] border border-[#c1c9bf] rounded-[16px] p-[25px] h-[500px] animate-pulse"></div>}>
             <AccessoriesSidebarFilter />
           </React.Suspense>

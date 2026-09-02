@@ -6,7 +6,6 @@ export const metadata: Metadata = {
   description: 'Shop the best clubs at GolfPro.',
 };
 
-import CategoryHero from "@/app/(storefront)/category/_components/CategoryHero";
 import ClubsSidebarFilter from "@/app/(storefront)/category/_components/ClubsSidebarFilter";
 import CategoryProductGrid from "@/app/(storefront)/_components/CategoryProductGrid";
 import CategorySubCategories from "@/app/(storefront)/_components/CategorySubCategories";
@@ -32,19 +31,17 @@ export default async function ClubsPage() {
   return (
     <div className="min-h-screen bg-[#fbf9f9] flex flex-col font-sans">
       <main className="flex-1">
-        <CategoryHero 
-          title="Clubs" 
-          description="Precision engineering for every shot. Discover our premium selection of golf clubs designed to elevate your game to the next level."
-        />
-
         <div className="max-w-[1280px] mx-auto px-6 py-[48px]">
-          <h2 className="text-[28px] font-serif font-semibold text-[#1b1c1c] mb-[32px]">GOLF CLUBS</h2>
+          <div className="flex flex-col items-center mb-10">
+            <h2 className="text-3xl md:text-4xl font-black text-zinc-900 tracking-tight uppercase mb-4 text-center">GOLF CLUBS</h2>
+            <div className="w-16 h-1 bg-green-600 rounded-full"></div>
+          </div>
 
           <CategorySubCategories subCategories={subCategories} />
           <BestBrandsCarousel brands={bestBrands} />
           <CategoryShopByCategory categories={shopByCategory} />
 
-          <div className="flex gap-[32px] items-start mt-[16px]">
+          <div className="flex flex-col lg:flex-row gap-[32px] items-start mt-[16px] w-full">
             <React.Suspense fallback={<div className="w-[256px] h-64 bg-gray-100 animate-pulse rounded-lg" />}>
               <ClubsSidebarFilter />
             </React.Suspense>

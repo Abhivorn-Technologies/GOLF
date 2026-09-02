@@ -28,9 +28,12 @@ export default function BestBrandsCarousel({ brands = [] }: { brands?: Brand[] }
         <div className="w-12 h-1 bg-green-600 rounded-full"></div>
       </div>
       
-      <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar">
-        {displayBrands.map((brand) => (
-          <Link key={brand.id} href={`?brand=${encodeURIComponent(brand.name)}`} scroll={false} className="min-w-[220px] max-w-[240px] flex-1 flex flex-col group cursor-pointer">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 pb-4">
+        {displayBrands.map((brand) => {
+          const isValidUrl = brand.link && brand.link.length > 1 && (brand.link.startsWith('/') || brand.link.startsWith('http'));
+          const targetHref = isValidUrl ? brand.link : `?brand=${encodeURIComponent(brand.name)}`;
+          return (
+          <Link key={brand.id} href={targetHref} scroll={false} className="flex-1 flex flex-col group cursor-pointer">
             <div className={`w-full h-[310px] rounded-xl bg-gradient-to-br ${brand.color} mb-4 relative overflow-hidden transition-transform duration-300 group-hover:scale-[1.02] border border-gray-100`}>
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors"></div>
               {brand.image ? (
@@ -49,7 +52,7 @@ export default function BestBrandsCarousel({ brands = [] }: { brands?: Brand[] }
               </span>
             </div>
           </Link>
-        ))}
+        )})}
       </div>
     </div>
   );

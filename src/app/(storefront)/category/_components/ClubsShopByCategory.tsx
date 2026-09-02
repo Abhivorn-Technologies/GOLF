@@ -57,7 +57,8 @@ export default function ClubsShopByCategory({ categories = [] }: { categories?: 
           
           // Automatically generate a filter link if the admin didn't provide a custom URL
           const filterVal = cat.name?.split(' ').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ') || '';
-          const targetHref = (cat.href && cat.href.trim() !== '') ? cat.href : `?type=${encodeURIComponent(filterVal)}`;
+          const isValidUrl = cat.href && cat.href.length > 1 && (cat.href.startsWith('/') || cat.href.startsWith('http'));
+          const targetHref = isValidUrl ? cat.href : `?type=${encodeURIComponent(filterVal)}`;
 
           return (
           <Link key={cat.id} href={targetHref} scroll={false} className="group relative h-[320px] rounded-2xl overflow-hidden bg-zinc-100 flex flex-col justify-end p-6 border border-gray-200 transition-all duration-300 hover:border-[#006747] hover:shadow-lg">

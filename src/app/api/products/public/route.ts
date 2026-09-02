@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     let query: any = {};
 
     if (category) {
-      query.category = category;
+      query.category = new RegExp('^' + category + '$', 'i');
     }
 
     if (saleOnly === 'true') {
@@ -133,6 +133,10 @@ export async function GET(request: Request) {
         totalPages,
         currentPage: page,
         pageSize: limit
+      }
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, max-age=0'
       }
     });
   } catch (error: any) {

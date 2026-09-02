@@ -72,7 +72,7 @@ export default function CartPage() {
                         <div className="flex-[2] flex gap-[24px] items-center">
                           <div className="w-[120px] h-[120px] bg-[#f8f9fa] border border-[#c4c6cc] rounded-[8px] flex items-center justify-center p-[8px]">
                             <img 
-                              src={`/images/${item.product.image}`} 
+                              src={item.product.image.startsWith('http') ? item.product.image : `/images/${item.product.image}`} 
                               alt={item.product.name} 
                               className="w-full h-full object-contain mix-blend-multiply"
                             />
@@ -88,9 +88,17 @@ export default function CartPage() {
                               {formatPrice(parsePrice(item.product.price))}
                             </span>
                             
+                            {item.variants && Object.keys(item.variants).length > 0 && (
+                              <div className="font-['Hanken_Grotesk'] text-[13px] text-gray-500 mt-2 flex flex-wrap gap-x-3">
+                                {Object.entries(item.variants).map(([k, v]) => (
+                                  <span key={k}>{k}: <span className="font-medium text-gray-700">{v}</span></span>
+                                ))}
+                              </div>
+                            )}
+                            
                             {/* Remove button (mobile) */}
                             <button 
-                              onClick={() => removeFromCart(item.product.id)}
+                              onClick={() => removeFromCart(item.cartItemId)}
                               className="md:hidden mt-2 text-red-500 hover:text-red-700 font-['Hanken_Grotesk'] text-[14px] flex items-center gap-1 w-fit"
                             >
                               <Trash2 className="w-4 h-4" /> Remove
@@ -102,7 +110,7 @@ export default function CartPage() {
                         <div className="flex-[1] flex justify-center">
                           <div className="flex items-center border border-[#c4c6cc] rounded-full h-[40px] overflow-hidden w-[100px]">
                             <button 
-                              onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                              onClick={() => updateQuantity(item.cartItemId, item.quantity - 1)}
                               className="w-[32px] h-full flex items-center justify-center hover:bg-gray-100 transition-colors text-black"
                             >
                               <Minus className="w-4 h-4" />
@@ -111,7 +119,7 @@ export default function CartPage() {
                               {item.quantity}
                             </div>
                             <button 
-                              onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                              onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}
                               className="w-[32px] h-full flex items-center justify-center hover:bg-gray-100 transition-colors text-black"
                             >
                               <Plus className="w-4 h-4" />
@@ -125,7 +133,7 @@ export default function CartPage() {
                             {formatPrice(parsePrice(item.product.price) * item.quantity)}
                           </span>
                           <button 
-                            onClick={() => removeFromCart(item.product.id)}
+                            onClick={() => removeFromCart(item.cartItemId)}
                             className="hidden md:flex text-gray-400 hover:text-red-500 transition-colors"
                             aria-label="Remove item"
                           >

@@ -59,3 +59,40 @@ body {
   transform: scale(1.1);
 }
 
+
+/* Restore WYSIWYG styles overridden by Tailwind Preflight */
+.wysiwyg-content b, .wysiwyg-content strong { font-weight: bold !important; }
+.wysiwyg-content i, .wysiwyg-content em { font-style: italic !important; }
+.wysiwyg-content u { text-decoration: underline !important; }
+.wysiwyg-content s, .wysiwyg-content strike { text-decoration: line-through !important; }
+.wysiwyg-content ul { list-style-type: disc !important; padding-left: 1.5rem !important; }
+.wysiwyg-content ol { list-style-type: decimal !important; padding-left: 1.5rem !important; }
+
+/* Support for legacy execCommand tags in contentEditable */
+.wysiwyg-content font[size="1"] { font-size: 0.75rem !important; }
+.wysiwyg-content font[size="2"] { font-size: 0.875rem !important; }
+.wysiwyg-content font[size="3"] { font-size: 1rem !important; }
+.wysiwyg-content font[size="4"] { font-size: 1.25rem !important; }
+.wysiwyg-content font[size="5"] { font-size: 1.5rem !important; }
+.wysiwyg-content font[size="6"] { font-size: 2rem !important; }
+.wysiwyg-content font[size="7"] { font-size: 3rem !important; }
+
+.wysiwyg-content font[face="Arial"] { font-family: Arial, Helvetica, sans-serif !important; }
+.wysiwyg-content font[face="Georgia, serif"] { font-family: Georgia, serif !important; }
+.wysiwyg-content font[face="monospace"] { font-family: monospace !important; }
+
+.wysiwyg-content div[style*="text-align: center"], .wysiwyg-content div[align="center"] { text-align: center !important; }
+.wysiwyg-content div[style*="text-align: right"], .wysiwyg-content div[align="right"] { text-align: right !important; }
+.wysiwyg-content div[style*="text-align: left"], .wysiwyg-content div[align="left"] { text-align: left !important; }
+
+/* React Quill Specific Classes */
+.wysiwyg-content .ql-align-center { text-align: center !important; }
+.wysiwyg-content .ql-align-right { text-align: right !important; }
+.wysiwyg-content .ql-align-justify { text-align: justify !important; }
+
+.wysiwyg-content .ql-font-serif { font-family: Georgia, serif !important; }
+.wysiwyg-content .ql-font-monospace { font-family: monospace !important; }
+
+.wysiwyg-content .ql-size-small { font-size: 0.75em !important; }
+.wysiwyg-content .ql-size-large { font-size: 1.5em !important; }
+.wysiwyg-content .ql-size-huge { font-size: 2.5em !important; }

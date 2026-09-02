@@ -3,12 +3,17 @@ import { Search, Mail, Phone, ShoppingCart } from 'lucide-react';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 import Order from '@/models/Order';
+import Pagination from '@/components/admin/Pagination';
 
-async function getCustomers() {
+async function getCustomers(page: number, limit: number) {
   try {
     await dbConnect();
-    // Get all non-admin users
-    const users = await User.find({ role: { $ne: 'admin' } }).sort({ createdAt: -1 }).lean();
+    const skip = (page - 1) * limit;
+
+    const [users, totalCount] = await Promise.all([
+      User.find({ role: { $ne: 'admin' } }).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      User.countDocuments({ role: { $ne: 'admin' } })
+    ]);
     
     // Get order counts for each user
     const customersWithStats = await Promise.all(users.map(async (user: any) => {
@@ -21,15 +26,20 @@ async function getCustomers() {
       };
     }));
     
-    return customersWithStats;
+    return { customers: customersWithStats, totalCount };
   } catch (error) {
     console.error("Failed to fetch customers", error);
-    return [];
+    return { customers: [], totalCount: 0 };
   }
 }
 
-export default async function CustomersPage() {
-  const customers = await getCustomers();
+export default async function CustomersPage(props: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
+  const searchParams = await props.searchParams;
+  const page = Number(searchParams?.page) || 1;
+  const limit = 10;
+
+  const { customers, totalCount } = await getCustomers(page, limit);
+  const totalPages = Math.ceil(totalCount / limit);
 
   return (
     <div className="space-y-6">
@@ -111,6 +121,7 @@ export default async function CustomersPage() {
             </tbody>
           </table>
         </div>
+        <Pagination currentPage={page} totalPages={totalPages} />
       </div>
     </div>
   );

@@ -50,9 +50,13 @@ export default async function BrandsWeLove({ category }: { category?: string }) 
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 lg:gap-6">
-          {brands.slice(0, 6).map((brand) => (
+          {brands.slice(0, 6).map((brand) => {
+            const isValidUrl = brand.linkUrl && brand.linkUrl.length > 1 && (brand.linkUrl.startsWith('/') || brand.linkUrl.startsWith('http'));
+            const targetHref = isValidUrl ? brand.linkUrl : `/products?brand=${encodeURIComponent(brand.name)}`;
+            
+            return (
             <Link 
-              href={`/products?brand=${encodeURIComponent(brand.name)}`}
+              href={targetHref}
               key={brand._id.toString()} 
               className="w-full h-[120px] lg:h-[140px] bg-white border border-gray-100 rounded-2xl flex items-center justify-center p-4 lg:p-6 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all cursor-pointer group relative overflow-hidden"
             >
@@ -66,7 +70,7 @@ export default async function BrandsWeLove({ category }: { category?: string }) 
                 />
               </div>
             </Link>
-          ))}
+          )})}
         </div>
         
         {/* Mobile View All Button (shows below grid on small screens) */}

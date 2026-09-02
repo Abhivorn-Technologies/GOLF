@@ -2,152 +2,161 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Check } from 'lucide-react';
-
-
+import { Check, Package, MapPin, CreditCard, ArrowRight, Truck } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 
 export default function OrderSuccessPage() {
   const { cartItems } = useCart();
   const [orderNumber, setOrderNumber] = useState('');
   const [deliveryDate, setDeliveryDate] = useState('');
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    // Generate a random order number for demo purposes
-    setOrderNumber(`GF${Math.floor(100000 + Math.random() * 900000)}`);
+    setIsMounted(true);
+    const searchParams = new URLSearchParams(window.location.search);
+    const orderId = searchParams.get('orderId');
     
-    // Set delivery date to 3 days from now
+    if (orderId) {
+      setOrderNumber(`LOR-${orderId.slice(-8).toUpperCase()}`);
+    } else {
+      setOrderNumber(`LOR-${Math.floor(1000000 + Math.random() * 9000000)}`);
+    }
+    
     const date = new Date();
     date.setDate(date.getDate() + 3);
     setDeliveryDate(date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }));
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const parsePrice = (priceStr: string) => {
-    return parseFloat(priceStr.replace(/[^0-9.-]+/g,""));
+  const parsePrice = (priceStr: string | number) => {
+    if (typeof priceStr === 'number') return priceStr;
+    if (typeof priceStr === 'string') {
+      const parsed = parseFloat(priceStr.replace(/[^0-9.-]+/g,""));
+      return isNaN(parsed) ? 0 : parsed;
+    }
+    return 0;
   };
 
   const formatPrice = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
-      minimumFractionDigits: 2
+      minimumFractionDigits: 0
     }).format(amount);
   };
 
+  if (!isMounted) return null;
+
   return (
-    <div className="bg-[#f8faf9] min-h-screen flex flex-col font-sans">
+    <div className="min-h-screen bg-[#FAFAFA] relative overflow-hidden flex flex-col items-center justify-center py-20 px-4">
       
-      
-      <main className="flex-1 flex flex-col items-center py-[64px] px-[24px]">
-        <div className="bg-[#fcf9f8] border border-[#c4c6cc] rounded-[13px] shadow-sm max-w-[800px] w-full p-[48px] relative overflow-hidden">
+      {/* Dynamic Background Elements */}
+      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-green-200 blur-[120px] opacity-40 mix-blend-multiply animate-pulse pointer-events-none"></div>
+      <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-100 blur-[120px] opacity-40 mix-blend-multiply pointer-events-none"></div>
+
+      <div className="w-full max-w-3xl relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
+        
+        {/* Success Header */}
+        <div className="flex flex-col items-center text-center mb-10">
+          <div className="relative mb-8">
+            <div className="absolute inset-0 bg-green-400 blur-xl opacity-30 rounded-full animate-pulse"></div>
+            <div className="w-24 h-24 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center relative shadow-2xl shadow-green-900/20 transform hover:scale-105 transition-transform duration-300">
+              <Check className="w-12 h-12 text-white" strokeWidth={3} />
+            </div>
+          </div>
           
-          {/* Subtle background accent */}
-          <div className="absolute bg-[#eae7e7] blur-[32px] opacity-20 -right-[64px] -top-[64px] rounded-full w-[256px] h-[256px] pointer-events-none"></div>
+          <h1 className="text-4xl md:text-5xl font-black text-black uppercase tracking-tighter mb-4 leading-tight">
+            Order Confirmed
+          </h1>
+          <p className="text-gray-500 font-medium max-w-md mx-auto text-lg leading-relaxed">
+            Thank you for shopping with Lorven Golf. We're getting your gear ready for the course!
+          </p>
+        </div>
 
-          {/* Header Section */}
-          <div className="flex flex-col items-center text-center relative z-10">
-            <div className="w-[80px] h-[80px] bg-[#f0eded] border border-[#c4c6cc] rounded-[12px] flex items-center justify-center mb-[32px]">
-              <Check className="w-[32px] h-[32px] text-[#006747]" strokeWidth={3} />
-            </div>
-
-            <h1 className="font-['EB_Garamond'] font-extrabold text-[32px] text-black tracking-[0.64px] uppercase mb-[16px]">
-              Thank You For Your Order!
-            </h1>
+        {/* Main Card (Glassmorphism) */}
+        <div className="bg-white/70 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[32px] p-8 md:p-12 overflow-hidden relative">
+          
+          {/* Bento Grid Layout */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             
-            <p className="font-['Hanken_Grotesk'] text-[#44474c] text-[16px] leading-[1.6] max-w-[500px]">
-              Your payment was successful and your gear is being prepared for shipment. A detailed receipt has been sent to your email.
-            </p>
+            {/* Order Number Box */}
+            <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm flex flex-col gap-2 transition-all hover:shadow-md">
+              <span className="text-xs font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                <Package className="w-4 h-4 text-black" /> Order Reference
+              </span>
+              <span className="text-2xl font-black text-black tracking-tight">{orderNumber}</span>
+            </div>
+
+            {/* Est Delivery Box */}
+            <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm flex flex-col gap-2 transition-all hover:shadow-md">
+              <span className="text-xs font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                <Truck className="w-4 h-4 text-black" /> Est. Delivery
+              </span>
+              <span className="text-2xl font-black text-green-700 tracking-tight">{deliveryDate}</span>
+            </div>
+
           </div>
 
-          {/* Order Details Box */}
-          <div className="mt-[32px] bg-[#fcf9f8] border border-[#c4c6cc] rounded-[9px] p-[24px] flex justify-between items-center relative z-10">
-            <div>
-              <p className="font-['Hanken_Grotesk'] font-bold text-[#44474c] text-[12px] tracking-[0.6px] uppercase mb-[4px]">
-                Order Number
-              </p>
-              <p className="font-['Hanken_Grotesk'] font-bold text-black text-[18px]">
-                #{orderNumber}
-              </p>
-            </div>
-            <div className="text-right sm:text-left">
-              <p className="font-['Hanken_Grotesk'] font-bold text-[#44474c] text-[12px] tracking-[0.6px] uppercase mb-[4px]">
-                Estimated Delivery
-              </p>
-              <div className="flex items-center gap-[8px]">
-                <svg width="18" height="13" viewBox="0 0 18 13" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M1 1L7 6L1 11" stroke="#004D34" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M7 6L17 6" stroke="#004D34" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <p className="font-['Hanken_Grotesk'] font-bold text-black text-[18px]">
-                  {deliveryDate}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Order Summary (Bento Style) */}
+          {/* Items Preview */}
           {cartItems.length > 0 && (
-            <div className="mt-[32px] relative z-10">
-              <h2 className="font-['EB_Garamond'] font-bold text-black text-[24px] tracking-[0.24px] border-b border-[#c4c6cc] pb-[8px] mb-[24px]">
-                Order Summary
-              </h2>
-              
-              <div className="flex flex-col gap-[16px]">
-                {cartItems.map((item, index) => (
-                  <div key={`${item.product.id}-${index}`} className="bg-[#fcf9f8] border border-[#c4c6cc] rounded-[10px] p-[16px] flex items-center gap-[16px]">
-                    
-                    {/* Product Image */}
-                    <Link href={`/product/${item.product.slug || item.product.id}`} className="w-[64px] h-[64px] bg-[#eae7e7] border border-[#c4c6cc] rounded-[4px] flex items-center justify-center p-[4px] flex-shrink-0 hover:border-black transition-colors">
+            <div className="bg-white border border-gray-100 rounded-2xl p-2 shadow-sm mb-8">
+              <div className="max-h-[280px] overflow-y-auto pr-2 custom-scrollbar">
+                {cartItems.map((item, index) => {
+                   const itemPrice = parsePrice(item.product.price);
+                   return (
+                  <div key={index} className="flex gap-4 items-center p-4 hover:bg-gray-50 rounded-xl transition-colors border-b border-gray-50 last:border-0">
+                    <div className="w-20 h-20 bg-gray-50 rounded-xl flex items-center justify-center p-2 shrink-0 border border-gray-100">
                       <img 
-                        src={item.product.image.startsWith('http') ? item.product.image : `/images/${item.product.image}`} 
+                        src={item.product.image?.startsWith('http') ? item.product.image : `/images/${item.product.image}`} 
                         alt={item.product.name}
                         className="w-full h-full object-contain mix-blend-multiply"
                       />
-                    </Link>
-
-                    {/* Product Info */}
-                    <div className="flex-1 flex flex-col justify-center">
-                      <Link href={`/product/${item.product.slug || item.product.id}`} className="font-['Hanken_Grotesk'] font-semibold text-black text-[13px] uppercase hover:underline hover:text-green-800">
-                        {item.product.brand} {item.product.name}
-                      </Link>
-                      <p className="font-['Hanken_Grotesk'] text-[#44474c] text-[14px] mt-[4px]">
-                        Qty: {item.quantity} | {item.product.category === 'shoes' || item.product.category === 'apparel' ? `Size: ${item.product.size || 'M'}` : 'Standard'}
-                      </p>
                     </div>
-
-                    {/* Price */}
-                    <div className="flex-shrink-0">
-                      <p className="font-['Hanken_Grotesk'] font-bold text-black text-[18px]">
-                        {formatPrice(parsePrice(item.product.price) * item.quantity)}
-                      </p>
+                    <div className="flex flex-col flex-1 gap-1">
+                      <span className="font-bold text-black uppercase tracking-tight">{item.product.name}</span>
+                      <span className="text-gray-500 text-sm font-medium">Qty: {item.quantity}</span>
+                      {item.variants && Object.keys(item.variants).length > 0 && (
+                        <div className="text-[11px] text-gray-400 font-bold flex gap-2 uppercase tracking-widest mt-1">
+                          {Object.entries(item.variants).map(([k,v]) => <span key={k} className="bg-gray-100 px-2 py-0.5 rounded">{k}: {v as string}</span>)}
+                        </div>
+                      )}
                     </div>
-
+                    <div className="font-black text-black">
+                      {formatPrice(itemPrice * item.quantity)}
+                    </div>
                   </div>
-                ))}
+                )})}
               </div>
             </div>
           )}
 
-          {/* Actions */}
-          <div className="mt-[32px] pt-[32px] border-t border-[#c4c6cc] flex flex-col sm:flex-row justify-center items-center gap-[16px] relative z-10">
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row items-center gap-4 w-full">
+            <Link 
+              href="/account/orders"
+              className="flex-1 w-full bg-black text-white rounded-2xl py-4 px-8 font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2 hover:bg-gray-800 hover:shadow-lg transition-all"
+            >
+              Track Order <ArrowRight className="w-4 h-4" />
+            </Link>
             <Link 
               href="/"
-              className="bg-[#004d34] hover:bg-[#003825] transition-colors text-white font-['Hanken_Grotesk'] font-bold text-[12px] uppercase tracking-[0.6px] px-[32px] py-[12px] rounded-[8px] w-full sm:w-auto text-center"
+              className="flex-1 w-full bg-white text-black border border-gray-200 rounded-2xl py-4 px-8 font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2 hover:bg-gray-50 hover:border-black transition-all"
             >
               Continue Shopping
             </Link>
-            <Link 
-              href="/account/orders"
-              className="bg-transparent border border-black hover:bg-black hover:text-white transition-colors text-black font-['Hanken_Grotesk'] font-bold text-[12px] uppercase tracking-[0.6px] px-[32px] py-[12px] rounded-[8px] w-full sm:w-auto text-center"
-            >
-              View Order Details
-            </Link>
           </div>
-
+          
         </div>
-      </main>
-
+      </div>
       
+      {/* Custom Scrollbar Styles for the Items Preview */}
+      <style dangerouslySetInnerHTML={{__html: `
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
+      `}} />
     </div>
   );
 }

@@ -14,18 +14,23 @@ import {
   ChevronRight,
   Users,
   Filter,
-  Settings
+  Settings,
+  RotateCcw,
+  Tag,
+  Ticket
 } from 'lucide-react';
 
 const navItems = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Products', href: '/admin/products', icon: Package },
   { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
+  { name: 'Returns', href: '/admin/returns', icon: RotateCcw },
   { name: 'Customers', href: '/admin/customers', icon: Users },
+  { name: 'Coupons', href: '/admin/coupons', icon: Ticket },
   { name: 'Banners', href: '/admin/banners', icon: ImageIcon },
-  { name: 'Brands', href: '/admin/brands', icon: ImageIcon },
+  { name: 'Brands', href: '/admin/brands', icon: Tag },
   { name: 'Filters', href: '/admin/category-settings', icon: Filter },
-  { name: 'Settings', href: '/admin/settings', icon: Settings },
+  { name: 'Promotional Settings', href: '/admin/settings', icon: Settings },
 ];
 
 export default function AdminSidebar() {
@@ -44,32 +49,32 @@ export default function AdminSidebar() {
 
   return (
     <aside 
-      className={`${isCollapsed ? 'w-[80px]' : 'w-[240px]'} bg-white border-r border-gray-200 flex-col hidden md:flex h-screen sticky top-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-20 transition-all duration-300 relative`}
+      className={`${isCollapsed ? 'w-[80px]' : 'w-[240px]'} bg-white flex-col hidden md:flex h-screen sticky top-0 shadow-[4px_0_30px_rgba(0,0,0,0.03)] z-20 transition-all duration-300 relative`}
     >
       {/* Collapse Toggle */}
       <button 
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-8 bg-white border border-gray-200 text-gray-500 hover:text-green-600 rounded-full p-1 shadow-sm z-30"
+        className="absolute -right-3 top-8 bg-white border border-gray-100 text-gray-400 hover:text-black rounded-full p-1 shadow-[0_4px_12px_rgba(0,0,0,0.05)] z-30 transition-colors"
         suppressHydrationWarning
       >
         {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
       </button>
 
       {/* Logo Area */}
-      <div className="h-[100px] flex items-center justify-center border-b border-gray-100 px-0 overflow-hidden bg-white">
-        <Link href="/admin" className={`relative w-full ${isCollapsed ? 'h-[40px]' : 'h-[80px]'} block hover:opacity-80 transition-all duration-300`}>
+      <div className="h-[100px] flex items-center justify-center px-0 overflow-hidden bg-white">
+        <Link href="/admin" className={`relative w-full ${isCollapsed ? 'h-[40px]' : 'h-[90px]'} block hover:opacity-80 transition-all duration-300`}>
           <Image 
             src="/images/golf.png" 
             alt="Golf Logo" 
             fill 
-            className={`object-contain ${isCollapsed ? 'object-center p-2' : 'object-center p-0 scale-110'}`}
+            className={`object-contain ${isCollapsed ? 'object-center p-0' : 'object-center p-0 scale-125'}`}
             priority
           />
         </Link>
       </div>
       
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-8 px-3 space-y-2 custom-scrollbar overflow-hidden">
+      <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1.5 custom-scrollbar overflow-hidden">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;
@@ -78,15 +83,15 @@ export default function AdminSidebar() {
             <Link 
               key={item.href} 
               href={item.href} 
-              className={`flex items-center gap-3 px-3 py-3.5 rounded-xl transition-all duration-200 group ${
+              className={`flex items-center gap-3 px-3.5 py-3 rounded-xl transition-all duration-300 group relative overflow-hidden ${
                 isActive 
-                  ? 'bg-black text-white font-semibold shadow-md' 
-                  : 'text-gray-500 hover:bg-gray-100 hover:text-black font-medium'
+                  ? 'bg-black text-white font-medium shadow-[0_4px_14px_rgba(0,0,0,0.15)]' 
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-black font-medium'
               } ${isCollapsed ? 'justify-center' : 'justify-start'}`}
               title={isCollapsed ? item.name : ""}
             >
-              <Icon className={`w-5 h-5 flex-shrink-0 transition-colors ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-black'}`} strokeWidth={isActive ? 2.5 : 2} />
-              {!isCollapsed && <span className="text-[15px] whitespace-nowrap">{item.name}</span>}
+              <Icon className={`w-[18px] h-[18px] flex-shrink-0 transition-colors ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-black'}`} strokeWidth={isActive ? 2.5 : 2} />
+              {!isCollapsed && <span className="text-sm tracking-wide">{item.name}</span>}
             </Link>
           );
         })}

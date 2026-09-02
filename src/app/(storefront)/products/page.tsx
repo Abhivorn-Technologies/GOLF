@@ -2,13 +2,14 @@
 
 import React, { useState, Suspense, useMemo } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { ALL_PRODUCTS, ProductType } from '@/data/products';
 import { ShoppingCart, Heart, Filter, X } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useSession } from 'next-auth/react';
 
 function ProductsContent() {
+  const router = useRouter();
   const { addToCart } = useCart();
   const { data: session } = useSession();
   const searchParams = useSearchParams();
@@ -176,19 +177,22 @@ function ProductsContent() {
       <div className="max-w-[1400px] mx-auto px-4 md:px-8">
         
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-end mb-8 border-b border-gray-200 pb-8">
-          <div>
-            <h1 className="text-4xl md:text-5xl font-black text-black uppercase tracking-tighter mb-2">
-              {brandParam ? `${brandParam} Gear` : (filter === 'All' ? 'Shop All Gear' : `Shop ${filter}`)}
-            </h1>
-            <p className="text-gray-500 font-medium">Browse our premium collection of golf equipment.</p>
-          </div>
+        <div className="mb-8 border-b border-gray-200 pb-8">
           
-
+          <div className="flex flex-col md:flex-row justify-between items-end">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-black text-black uppercase tracking-tighter mb-2">
+                {brandParam ? `${brandParam} Gear` : (filter === 'All' ? 'Shop All Gear' : `Shop ${filter}`)}
+              </h1>
+              <p className="text-gray-500 font-medium">Browse our premium collection of golf equipment.</p>
+            </div>
+          </div>
         </div>
+          
+        
 
         {/* Mobile Filter Toggle Button */}
-        <div className="md:hidden mb-6 flex justify-between items-center">
+        <div className="lg:hidden mb-6 flex justify-between items-center">
           <p className="text-sm font-bold text-gray-700">{displayedProducts.length} Results</p>
           <button 
             onClick={() => setIsMobileFiltersOpen(true)}
@@ -198,21 +202,21 @@ function ProductsContent() {
           </button>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-8 items-start">
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
           
           {/* Dynamic Sidebar */}
           <aside className={`
-            fixed inset-0 z-50 bg-white p-6 overflow-y-auto transition-transform transform md:relative md:transform-none md:w-64 md:bg-transparent md:p-0 md:z-0 md:block flex-shrink-0
+            fixed inset-0 z-50 bg-white p-6 overflow-y-auto transition-transform transform lg:relative lg:transform-none lg:w-64 lg:bg-transparent lg:p-0 lg:z-0 lg:block flex-shrink-0
             ${isMobileFiltersOpen ? 'translate-x-0' : '-translate-x-full'}
           `}>
-            <div className="flex justify-between items-center md:hidden mb-8 border-b pb-4">
+            <div className="flex justify-between items-center lg:hidden mb-8 border-b pb-4">
               <h2 className="text-xl font-black uppercase tracking-wider">Filters</h2>
               <button onClick={() => setIsMobileFiltersOpen(false)} className="p-2 bg-gray-100 rounded-full text-gray-500">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="mb-6 flex justify-between items-center hidden md:flex">
+            <div className="mb-6 flex justify-between items-center hidden lg:flex">
               <h2 className="text-lg font-black uppercase tracking-wider">Filters</h2>
               {Object.values(selectedAttributes).flat().length > 0 && (
                 <button onClick={clearFilters} className="text-xs font-bold text-red-500 hover:underline">
@@ -253,7 +257,7 @@ function ProductsContent() {
             )}
             
             {/* Mobile Apply Button */}
-            <div className="md:hidden mt-8">
+            <div className="lg:hidden mt-8">
               <button 
                 onClick={() => setIsMobileFiltersOpen(false)}
                 className="w-full bg-black text-white py-3 rounded-xl font-bold uppercase tracking-wider"
@@ -265,7 +269,7 @@ function ProductsContent() {
 
           {/* Product Grid Area */}
           <div className="flex-1 w-full">
-            <div className="hidden md:block mb-6 text-sm font-bold text-gray-500">
+            <div className="hidden lg:block mb-6 text-sm font-bold text-gray-500">
               Showing {displayedProducts.length} Results
             </div>
 
@@ -281,7 +285,7 @@ function ProductsContent() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                 {displayedProducts.map(product => (
                   <div key={product.id} className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.02)] border border-gray-100 overflow-hidden flex flex-col transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] group">
                     

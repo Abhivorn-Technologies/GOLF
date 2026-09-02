@@ -38,7 +38,7 @@ export default async function ApparelCategoryPage() {
       <BrandsWeLove category="apparel" />
 
       <section className="bg-white py-[64px]">
-        <div className="max-w-[1280px] mx-auto px-[64px] flex gap-[48px] items-start mt-[32px]">
+        <div className="max-w-[1280px] mx-auto px-[32px] md:px-[64px] flex flex-col lg:flex-row gap-[48px] items-start mt-[32px] w-full">
           {/* Sidebar */}
           <React.Suspense fallback={<div className="w-[256px] shrink-0 bg-[#fbf9f9] border border-[#c1c9bf] rounded-[16px] p-[25px] h-[500px] animate-pulse"></div>}>
             <ApparelSidebarFilter />

@@ -35,7 +35,7 @@ export default async function BrandsPage() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
         {brands.length === 0 ? (
           <div className="col-span-full bg-white rounded-2xl p-12 text-center border border-gray-100 shadow-sm">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -53,35 +53,35 @@ export default async function BrandsPage() {
             <div key={brand._id.toString()} className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.04)] overflow-hidden flex flex-col group hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-all">
               
               {/* Image Preview */}
-              <div className="w-full h-48 relative bg-gray-50 p-4 border-b border-gray-100">
+              <div className="w-full h-24 relative bg-gray-50 p-2 border-b border-gray-100">
                 <Image 
                   src={brand.imageUrl} 
                   alt={brand.name} 
                   fill 
-                  className="object-contain p-4"
+                  className="object-contain p-2"
                 />
-                <div className="absolute top-4 right-4">
-                  <span className={`text-xs font-bold uppercase tracking-wider px-2 py-1 rounded backdrop-blur-sm ${brand.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`}>
+                <div className="absolute top-2 right-2">
+                  <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded backdrop-blur-sm ${brand.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`}>
                     {brand.isActive ? 'Active' : 'Hidden'}
                   </span>
                 </div>
               </div>
 
               {/* Content */}
-              <div className="flex-1 p-6 flex flex-col justify-between">
+              <div className="flex-1 p-4 flex flex-col justify-between">
                 <div>
-                  <div className="flex justify-between items-start mb-2">
-                    <h2 className="text-xl font-bold text-gray-900 mb-1 truncate">{brand.name}</h2>
+                  <div className="flex justify-between items-start mb-1">
+                    <h2 className="text-base font-bold text-gray-900 mb-1 truncate">{brand.name}</h2>
                   </div>
                 </div>
 
-                <div className="mt-6 flex justify-between items-center pt-6 border-t border-gray-100">
-                  <div className="text-sm text-gray-400">
+                <div className="mt-3 flex flex-col xl:flex-row justify-between items-start xl:items-center pt-3 border-t border-gray-100 gap-2">
+                  <div className="text-xs text-gray-400 font-medium">
                     Order: {brand.displayOrder || index + 1}
                   </div>
-                  <div className="flex gap-2">
-                    <Link href={`/admin/brands/${brand._id}/edit`} className="px-4 py-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg font-medium transition-colors flex items-center gap-2 text-sm">
-                      <Edit2 className="w-4 h-4" />
+                  <div className="flex gap-2 w-full xl:w-auto justify-end">
+                    <Link href={`/admin/brands/${brand._id}/edit`} className="w-full xl:w-auto px-3 py-1.5 justify-center text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md font-medium transition-colors flex items-center gap-1 text-xs">
+                      <Edit2 className="w-3 h-3" />
                       Edit
                     </Link>
                   </div>

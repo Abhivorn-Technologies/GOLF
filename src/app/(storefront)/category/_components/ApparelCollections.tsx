@@ -6,18 +6,25 @@ export default function ApparelCollections({ collections }: { collections: any[]
     <section className="bg-white py-[64px] border-b border-[#c1c9bf]">
       <div className="max-w-[1280px] mx-auto px-[64px]">
         {/* Header */}
-        <div className="flex items-center justify-between mb-[40px]">
-          <h2 className="text-[36px] font-serif font-semibold text-[#1b1c1c] leading-none">Featured Collections</h2>
-          <Link href="#" className="flex items-center gap-1 group text-[#414942] hover:text-green-700 transition-colors">
-             <span className="text-[14px] font-serif font-medium uppercase tracking-[1.4px]">View All</span>
+        <div className="flex flex-col items-center mb-[40px] relative">
+          <h2 className="text-3xl md:text-4xl font-black text-zinc-900 tracking-tight uppercase mb-4 text-center">Featured Collections</h2>
+          <div className="w-16 h-1 bg-green-600 rounded-full mb-6"></div>
+          
+          <Link href="#" className="absolute right-0 top-2 hidden md:flex items-center gap-1 group text-[#414942] hover:text-green-700 transition-colors">
+             <span className="text-[14px] font-bold uppercase tracking-[1.4px]">View All</span>
              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1 group-hover:translate-x-1 transition-transform"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </Link>
         </div>
 
         {/* Dynamic Bento Layout */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-[24px]">
-          {collections.slice(0, 2).map((col, index) => (
-            <Link key={index} href={col.href || '#'} className="block relative h-[400px] rounded-[16px] overflow-hidden group">
+          {collections.slice(0, 2).map((col, index) => {
+            const filterVal = col.name?.split(' ').map((w: string) => w.charAt(0) + w.slice(1).toLowerCase()).join(' ') || '';
+            const isValidUrl = col.href && col.href.length > 1 && (col.href.startsWith('/') || col.href.startsWith('http'));
+            const targetHref = isValidUrl ? col.href : `?type=${encodeURIComponent(filterVal)}`;
+            
+            return (
+            <Link key={index} href={targetHref} scroll={false} className="block relative h-[400px] rounded-[16px] overflow-hidden group">
               <div className="absolute inset-0 bg-zinc-200">
                 {col.image ? (
                   <img src={col.image.startsWith('http') ? col.image : `/images/${col.image}`} alt={col.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
@@ -39,7 +46,7 @@ export default function ApparelCollections({ collections }: { collections: any[]
                 </div>
               </div>
             </Link>
-          ))}
+          )})}
         </div>
       </div>
     </section>

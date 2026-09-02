@@ -3,19 +3,19 @@ import React from 'react';
 
 import AccountSidebar from "@/app/(storefront)/account/_components/AccountSidebar";
 import AccountAddress from "@/app/(storefront)/account/_components/AccountAddress";
+import AccountLogoutButton from "@/app/(storefront)/account/_components/AccountLogoutButton";
 
 export default function AddressPage() {
   return (
-    <div className="bg-white min-h-screen flex flex-col font-sans">
+    <div className="bg-white flex flex-col font-sans">
       
       
       <main className="flex-1">
-        {/* Breadcrumb / Top Spacing */}
-        <div className="max-w-[1280px] mx-auto px-[64px] pt-[32px]">
-          {/* Spacing for breadcrumbs if needed in the future */}
+        <div className="w-full px-4 md:px-8 pt-8 flex justify-end">
+          <AccountLogoutButton />
         </div>
 
-        <div className="max-w-[1280px] mx-auto px-[64px] py-[32px] flex flex-col md:flex-row gap-[48px] items-start">
+        <div className="w-full px-4 md:px-8 py-8 flex flex-col md:flex-row gap-8 md:gap-16 items-start">
           
           {/* Account Navigation Sidebar */}
           <AccountSidebar />

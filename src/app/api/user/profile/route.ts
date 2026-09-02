@@ -46,16 +46,6 @@ export async function PUT(req: Request) {
     const updateData: any = {};
     if (body.name !== undefined) updateData.name = body.name;
     if (body.newsletterSubscribed !== undefined) updateData.newsletterSubscribed = body.newsletterSubscribed;
-    
-    // Simple address appending logic
-    if (body.newAddress) {
-      const user = await User.findOne({ email: session.user.email });
-      if (user) {
-        user.addresses.push(body.newAddress);
-        await user.save();
-        return NextResponse.json({ user, message: 'Address Added' }, { status: 200 });
-      }
-    }
 
     const user = await User.findOneAndUpdate(
       { email: session.user.email },

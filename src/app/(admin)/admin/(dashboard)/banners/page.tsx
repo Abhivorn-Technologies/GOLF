@@ -4,6 +4,7 @@ import { Plus, Trash2, Edit2, MoveUp, MoveDown } from 'lucide-react';
 import dbConnect from '@/lib/mongodb';
 import Banner from '@/models/Banner';
 import Link from 'next/link';
+import DeleteBannerButton from './_components/DeleteBannerButton';
 
 async function getBanners() {
   try {
@@ -15,6 +16,11 @@ async function getBanners() {
     return [];
   }
 }
+
+const stripHtml = (html: string) => {
+  if (!html) return '';
+  return html.replace(/<[^>]*>?/gm, '').trim();
+};
 
 export default async function BannersPage() {
   const banners = await getBanners();
@@ -49,14 +55,18 @@ export default async function BannersPage() {
             </Link>
           </div>
         ) : (
-          banners.map((banner, index) => (
+          banners.map((banner, index) => {
+            const plainTitle = banner.title ? stripHtml(banner.title) : '';
+            const plainSubtitle = banner.subtitle ? stripHtml(banner.subtitle) : '';
+            
+            return (
             <div key={banner._id.toString()} className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.04)] overflow-hidden flex flex-col md:flex-row group hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-all">
               
               {/* Image Preview */}
-              <div className="w-full md:w-1/3 lg:w-1/4 h-48 md:h-auto relative bg-gray-100">
+              <div className="w-full md:w-1/3 lg:w-1/4 h-48 md:h-auto relative bg-gray-100 border-r border-gray-100">
                 <Image 
                   src={banner.imageUrl} 
-                  alt={banner.title || 'Hero Banner'} 
+                  alt={plainTitle || 'Hero Banner'} 
                   fill 
                   className="object-cover"
                 />
@@ -72,8 +82,8 @@ export default async function BannersPage() {
                 <div>
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <h2 className="text-xl font-bold text-gray-900 mb-1">{banner.title || 'Untitled Banner'}</h2>
-                      {banner.subtitle && <p className="text-gray-500">{banner.subtitle}</p>}
+                      <h2 className="text-xl font-bold text-gray-900 mb-1 line-clamp-1">{plainTitle || 'Untitled Banner'}</h2>
+                      {plainSubtitle && <p className="text-gray-500 line-clamp-2">{plainSubtitle}</p>}
                     </div>
                     
                     {/* Order Controls */}
@@ -100,20 +110,21 @@ export default async function BannersPage() {
                     Order: {banner.displayOrder || index + 1}
                   </div>
                   <div className="flex gap-2">
-                    <button className="px-4 py-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg font-medium transition-colors flex items-center gap-2 text-sm">
+                    <Link 
+                      href={`/admin/banners/${banner._id.toString()}`}
+                      className="px-4 py-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg font-medium transition-colors flex items-center gap-2 text-sm"
+                    >
                       <Edit2 className="w-4 h-4" />
                       Edit
-                    </button>
-                    <button className="px-4 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg font-medium transition-colors flex items-center gap-2 text-sm">
-                      <Trash2 className="w-4 h-4" />
-                      Delete
-                    </button>
+                    </Link>
+                    <DeleteBannerButton id={banner._id.toString()} />
                   </div>
                 </div>
               </div>
 
             </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

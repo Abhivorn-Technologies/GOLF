@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { Filter, X } from 'lucide-react';
 import PriceRangeSlider from "@/app/(storefront)/_components/PriceRangeSlider";
 
 interface FilterItem {
@@ -21,6 +22,19 @@ export default function DynamicSidebarFilter({ filterData, allowedAttributes }: 
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  // Prevent background scrolling when drawer is open
+  useEffect(() => {
+    if (isMobileOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobileOpen]);
 
   const createQueryString = useCallback(
     (name: string, value: string, isSingleValue = false) => {
@@ -68,15 +82,47 @@ export default function DynamicSidebarFilter({ filterData, allowedAttributes }: 
   }
 
   return (
-    <aside className="w-[256px] shrink-0 bg-[#fbf9f9] border border-[#c1c9bf] rounded-[16px] p-[25px] flex flex-col gap-[24px]">
-      
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-[20px] font-serif font-semibold text-[#1b1c1c]">Filters</h3>
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M4.5 9H13.5M2.25 4.5H15.75M6.75 13.5H11.25" stroke="#1b1c1c" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
+    <>
+      {/* Mobile Toggle Button */}
+      <div className="lg:hidden w-full mb-2">
+        <button 
+          onClick={() => setIsMobileOpen(true)}
+          className="w-full flex items-center justify-center gap-2 bg-black text-white py-3.5 rounded-xl font-bold uppercase tracking-wider text-sm hover:bg-gray-800 transition-colors"
+        >
+          <Filter className="w-4 h-4" /> Filters
+        </button>
       </div>
+
+      {/* Mobile Drawer Overlay */}
+      {isMobileOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black/60 z-[100] backdrop-blur-sm transition-opacity" 
+          onClick={() => setIsMobileOpen(false)} 
+        />
+      )}
+
+      {/* Sidebar Container */}
+      <aside className={`
+        fixed inset-y-0 left-0 z-[110] w-[85%] max-w-[340px] bg-white overflow-y-auto transition-transform duration-300 ease-in-out
+        lg:relative lg:w-[256px] lg:z-0 lg:translate-x-0 lg:bg-[#fbf9f9] lg:border lg:border-[#c1c9bf] lg:rounded-[16px] lg:shrink-0 lg:flex lg:flex-col lg:gap-[24px] lg:p-[25px]
+        ${isMobileOpen ? 'translate-x-0 shadow-2xl p-[24px] flex flex-col gap-6' : '-translate-x-full lg:shadow-none hidden lg:flex'}
+      `}>
+        
+        {/* Mobile Header with Close Button */}
+        <div className="lg:hidden flex items-center justify-between border-b border-gray-100 pb-4 mb-2">
+          <h2 className="text-[20px] font-black uppercase tracking-widest text-black">Filters</h2>
+          <button onClick={() => setIsMobileOpen(false)} className="p-2 text-gray-400 hover:text-black hover:bg-gray-50 rounded-full transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Desktop Header */}
+        <div className="hidden lg:flex items-center justify-between">
+          <h3 className="text-[20px] font-serif font-semibold text-[#1b1c1c]">Filters</h3>
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4.5 9H13.5M2.25 4.5H15.75M6.75 13.5H11.25" stroke="#1b1c1c" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
 
       <hr className="border-[#c1c9bf]" />
 
@@ -87,7 +133,7 @@ export default function DynamicSidebarFilter({ filterData, allowedAttributes }: 
             <h4 className="text-[16px] font-serif font-semibold text-[#1b1c1c] mb-[16px] uppercase">Gender</h4>
             <div className="flex flex-col gap-[12px]">
               {genderData.map((item) => (
-                <button type="button" key={item.name} className="flex items-center gap-[12px] cursor-pointer group w-full text-left" onClick={() => handleToggle('Gender', item.name)}>
+                <button type="button" key={item.name} className="flex items-center gap-[12px] cursor-pointer group w-full text-left" onClick={() => handleToggle('Gender', item.name)} suppressHydrationWarning>
                   <div className={`w-[20px] h-[20px] rounded-[4px] border flex items-center justify-center transition-colors ${isSelected('Gender', item.name) ? 'bg-[#006747] border-[#006747]' : 'border-[#717b71] group-hover:border-[#006747]'}`}>
                     {isSelected('Gender', item.name) && (
                       <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -108,10 +154,10 @@ export default function DynamicSidebarFilter({ filterData, allowedAttributes }: 
       {typeData?.length > 0 && (
         <>
           <div>
-            <h4 className="text-[16px] font-serif font-semibold text-[#1b1c1c] mb-[16px] uppercase">Category</h4>
+            <h4 className="text-[16px] font-serif font-semibold text-[#1b1c1c] mb-[16px] uppercase">Type</h4>
             <div className="flex flex-col gap-[12px]">
               {typeData.map((item) => (
-                <button type="button" key={item.name} className="flex items-center gap-[12px] cursor-pointer group w-full text-left" onClick={() => handleToggle('Type', item.name)}>
+                <button type="button" key={item.name} className="flex items-center gap-[12px] cursor-pointer group w-full text-left" onClick={() => handleToggle('Type', item.name)} suppressHydrationWarning>
                   <div className={`w-[20px] h-[20px] rounded-[4px] border flex items-center justify-center transition-colors ${isSelected('Type', item.name) ? 'bg-[#006747] border-[#006747]' : 'border-[#717b71] group-hover:border-[#006747]'}`}>
                     {isSelected('Type', item.name) && (
                       <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -135,7 +181,7 @@ export default function DynamicSidebarFilter({ filterData, allowedAttributes }: 
             <h4 className="text-[16px] font-serif font-semibold text-[#1b1c1c] mb-[16px] uppercase">Brand</h4>
             <div className="flex flex-col gap-[12px]">
               {filterData.brands.map((brand) => (
-                <button type="button" key={brand.name} className="flex items-center gap-[12px] cursor-pointer group w-full text-left" onClick={() => handleToggle('brand', brand.name)}>
+                <button type="button" key={brand.name} className="flex items-center gap-[12px] cursor-pointer group w-full text-left" onClick={() => handleToggle('brand', brand.name)} suppressHydrationWarning>
                   <div className={`w-[20px] h-[20px] rounded-[4px] border flex items-center justify-center transition-colors ${isSelected('brand', brand.name) ? 'bg-[#006747] border-[#006747]' : 'border-[#717b71] group-hover:border-[#006747]'}`}>
                     {isSelected('brand', brand.name) && (
                       <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -159,7 +205,7 @@ export default function DynamicSidebarFilter({ filterData, allowedAttributes }: 
             <h4 className="text-[16px] font-serif font-semibold text-[#1b1c1c] mb-[16px] uppercase">{attrKey}</h4>
             <div className="flex flex-col gap-[12px]">
               {attrValues.map((val) => (
-                <button type="button" key={val.name} className="flex items-center gap-[12px] cursor-pointer group w-full text-left" onClick={() => handleToggle(attrKey, val.name)}>
+                <button type="button" key={val.name} className="flex items-center gap-[12px] cursor-pointer group w-full text-left" onClick={() => handleToggle(attrKey, val.name)} suppressHydrationWarning>
                   <div className={`w-[20px] h-[20px] rounded-[4px] border flex items-center justify-center transition-colors ${isSelected(attrKey, val.name) ? 'bg-[#006747] border-[#006747]' : 'border-[#717b71] group-hover:border-[#006747]'}`}>
                     {isSelected(attrKey, val.name) && (
                       <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -178,7 +224,7 @@ export default function DynamicSidebarFilter({ filterData, allowedAttributes }: 
 
       {/* On Sale Filter */}
       <div>
-        <button type="button" className="flex items-center gap-[12px] cursor-pointer group w-full text-left" onClick={() => handleToggle('sale', 'true', true)}>
+        <button type="button" className="flex items-center gap-[12px] cursor-pointer group w-full text-left" onClick={() => handleToggle('sale', 'true', true)} suppressHydrationWarning>
           <div className={`w-[20px] h-[20px] rounded-[4px] border flex items-center justify-center transition-colors ${isSelected('sale', 'true') ? 'bg-[#006747] border-[#006747]' : 'border-[#717b71] group-hover:border-[#006747]'}`}>
             {isSelected('sale', 'true') && (
               <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -193,7 +239,7 @@ export default function DynamicSidebarFilter({ filterData, allowedAttributes }: 
       <hr className="border-[#c1c9bf]" />
 
       {/* Price Filter (Interactive Slider) */}
-      <div>
+      <div className="mb-8">
         <h4 className="text-[14px] font-serif font-medium text-[#414942] tracking-[1.4px] mb-[16px] uppercase">PRICE RANGE</h4>
         <PriceRangeSlider 
           min={0}
@@ -212,7 +258,18 @@ export default function DynamicSidebarFilter({ filterData, allowedAttributes }: 
           }}
         />
       </div>
+
+      {/* Mobile Apply Button */}
+      <div className="lg:hidden sticky bottom-0 bg-white pt-4 pb-2 border-t border-gray-100 mt-auto z-10">
+        <button 
+          onClick={() => setIsMobileOpen(false)}
+          className="w-full bg-black text-white py-3.5 rounded-xl font-bold uppercase tracking-wider text-sm hover:bg-gray-800 transition-colors shadow-lg"
+        >
+          View Results
+        </button>
+      </div>
       
     </aside>
+    </>
   );
 }

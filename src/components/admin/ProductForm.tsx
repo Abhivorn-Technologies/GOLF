@@ -15,6 +15,24 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
   const [dynamicAttributes, setDynamicAttributes] = useState<{ key: string, value: string }[]>(
     initialData?.attributes || []
   );
+  
+  const [selectedCategory, setSelectedCategory] = useState(initialData?.category || 'clubs');
+  const [availableAttributes, setAvailableAttributes] = useState<string[]>([]);
+
+  React.useEffect(() => {
+    const fetchAttributes = async () => {
+      try {
+        const res = await fetch(`/api/admin/attributes?category=${selectedCategory}`);
+        if (res.ok) {
+          const data = await res.json();
+          setAvailableAttributes(data.attributes || []);
+        }
+      } catch (err) {
+        console.error('Failed to fetch available attributes:', err);
+      }
+    };
+    fetchAttributes();
+  }, [selectedCategory]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -152,7 +170,7 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-gray-100 p-6 md:p-8 space-y-8">
+    <form onSubmit={handleSubmit} className="bg-white rounded-[24px] shadow-[0_8px_40px_rgba(0,0,0,0.04)] border-0 p-6 md:p-10 space-y-8">
       {error && (
         <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-medium border border-red-100">
           {error}
@@ -212,7 +230,12 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-              <select name="category" defaultValue={initialData?.category || 'clubs'} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-black focus:ring-2 focus:ring-gray-200 transition-all outline-none bg-white">
+              <select 
+                name="category" 
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-black focus:ring-2 focus:ring-gray-200 transition-all outline-none bg-white"
+              >
                 <option value="clubs">Clubs</option>
                 <option value="apparel">Apparel</option>
                 <option value="shoes">Shoes</option>
@@ -284,6 +307,11 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
             </div>
             
             <div className="space-y-3">
+              <datalist id="available-attributes">
+                {availableAttributes.map(attr => (
+                  <option key={attr} value={attr} />
+                ))}
+              </datalist>
               {dynamicAttributes.length === 0 ? (
                 <p className="text-xs text-gray-500 italic">No custom attributes added. (e.g. Color, Material, Flex)</p>
               ) : (
@@ -293,6 +321,7 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
                       value={attr.key}
                       onChange={(e) => updateAttribute(idx, 'key', e.target.value)}
                       placeholder="e.g. Color"
+                      list="available-attributes"
                       className="w-1/3 px-3 py-2 text-sm rounded-lg border border-gray-200 focus:border-black outline-none"
                     />
                     <input 

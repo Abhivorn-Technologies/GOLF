@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import PageSettings from '@/models/PageSettings';
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import User from "@/models/User";
+import { verifyAdminSession } from '@/lib/adminAuth';
 
 export async function GET(request: Request) {
   try {
@@ -22,24 +20,10 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    let session = await getServerSession(authOptions);
+    const session = await verifyAdminSession();
     
-    // Fallback for local development if NextAuth cookies are dropped
-    if (!session && process.env.NODE_ENV === 'development') {
-      session = { user: { email: 'admin@golfpro.com' } } as any;
-    }
-
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    
-    await dbConnect();
-    const user = await User.findOne({ email: session.user?.email });
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized - User not found in database for email: " + session.user?.email }, { status: 401 });
-    }
-    if (user.role !== 'admin') {
-      return NextResponse.json({ error: "Unauthorized - User role is " + user.role + ", must be admin" }, { status: 401 });
     }
 
     const data = await request.json();

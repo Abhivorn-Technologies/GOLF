@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Save, Plus, Trash2, UploadCloud, Loader2 } from 'lucide-react';
+import { Save, Plus, Trash2, UploadCloud, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function PageSettingsAdmin() {
   const [loading, setLoading] = useState(true);
@@ -11,8 +11,21 @@ export default function PageSettingsAdmin() {
   const [bestBrands, setBestBrands] = useState<any[]>([]);
   const [shopByCategory, setShopByCategory] = useState<any[]>([]);
   const [subCategories, setSubCategories] = useState<any[]>([]);
+  const [utilityBar, setUtilityBar] = useState<{announcements: string[]}>({ announcements: [] });
   const [uploadingImage, setUploadingImage] = useState(false);
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+
+  // Accordion state
+  const [openSections, setOpenSections] = useState({
+    bestBrands: true,
+    shopByCategory: false,
+    subCategories: false,
+    utilityBar: true
+  });
+
+  const toggleSection = (section: keyof typeof openSections) => {
+    setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type });
@@ -41,6 +54,7 @@ export default function PageSettingsAdmin() {
           setBestBrands(data.bestBrands || []);
           setShopByCategory(data.shopByCategory || []);
           setSubCategories(data.subCategories || []);
+          setUtilityBar(data.utilityBar || { announcements: [] });
         }
       } catch (error) {
         console.error("Failed to fetch settings", error);
@@ -61,7 +75,8 @@ export default function PageSettingsAdmin() {
           page,
           bestBrands,
           shopByCategory,
-          subCategories
+          subCategories,
+          utilityBar
         })
       });
       if (res.ok) {
@@ -84,7 +99,7 @@ export default function PageSettingsAdmin() {
     setBestBrands(newBrands);
   };
 
-  const addCategory = () => setShopByCategory([...shopByCategory, { id: Date.now().toString(), name: '', desc: '', href: '', color: 'from-gray-100 to-gray-200', image: '' }]);
+  const addCategory = () => setShopByCategory([...shopByCategory, { id: Date.now().toString(), name: '', desc: '', href: '', color: 'from-gray-100 to-gray-200', image: '', icon: '' }]);
   const removeCategory = (idx: number) => setShopByCategory(shopByCategory.filter((_, i) => i !== idx));
   const updateCategory = (idx: number, field: string, value: string) => {
     const newCats = [...shopByCategory];
@@ -100,10 +115,25 @@ export default function PageSettingsAdmin() {
     setSubCategories(newSubCats);
   };
 
+  const addAnnouncement = () => {
+    setUtilityBar(prev => ({ announcements: [...(prev.announcements || []), ''] }));
+  };
+  const removeAnnouncement = (idx: number) => {
+    setUtilityBar(prev => ({ announcements: (prev.announcements || []).filter((_, i) => i !== idx) }));
+  };
+  const updateAnnouncement = (idx: number, value: string) => {
+    setUtilityBar(prev => {
+      const newAnnouncements = [...(prev.announcements || [])];
+      newAnnouncements[idx] = value;
+      return { announcements: newAnnouncements };
+    });
+  };
+
+
   if (loading) return <div className="p-8">Loading settings...</div>;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8">
+    <div className="w-full space-y-8">
       <div className="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-gray-100">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Promotional Settings</h1>
@@ -111,6 +141,7 @@ export default function PageSettingsAdmin() {
         </div>
         <div className="flex gap-4 items-center">
           <select value={page} onChange={(e) => setPage(e.target.value)} className="border-gray-200 rounded-lg text-sm font-medium">
+            <option value="global">Global Settings (Utility Bar)</option>
             <option value="clubs">Clubs Page</option>
             <option value="apparel">Apparel Page</option>
             <option value="shoes">Shoes Page</option>
@@ -130,16 +161,65 @@ export default function PageSettingsAdmin() {
       </div>
 
       <div className="grid grid-cols-1 gap-8">
+        {page === 'global' ? (
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div className="flex justify-between items-center mb-2 cursor-pointer select-none" onClick={() => toggleSection('utilityBar')}>
+              <div className="flex items-center gap-2">
+                {openSections.utilityBar ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+                <h2 className="text-lg font-bold text-gray-900">Utility Bar Links (Above Nav)</h2>
+              </div>
+            </div>
+            
+            {openSections.utilityBar && (
+              <div className="mt-6">
+                <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                  <div className="flex justify-between items-center mb-4">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-900">Announcement Texts</label>
+                      <p className="text-xs text-gray-500 mt-1">These texts will cycle dynamically in the dark bar at the very top of the storefront.</p>
+                    </div>
+                    <button onClick={addAnnouncement} className="flex items-center gap-1 text-xs text-[#006747] font-medium hover:underline">
+                      <Plus className="w-3 h-3" /> Add Announcement
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {utilityBar.announcements?.map((text: string, idx: number) => (
+                      <div key={idx} className="flex gap-2 items-center">
+                        <input 
+                          type="text" 
+                          value={text} 
+                          onChange={(e) => updateAnnouncement(idx, e.target.value)} 
+                          className="w-full text-sm border-gray-300 rounded-md p-2 focus:ring-[#006747] focus:border-[#006747]" 
+                          placeholder="e.g. Free shipping on all orders over $100!" 
+                        />
+                        <button onClick={() => removeAnnouncement(idx)} className="text-red-500 hover:bg-red-50 p-2 rounded-md transition-colors"><Trash2 className="w-4 h-4" /></button>
+                      </div>
+                    ))}
+                    {(!utilityBar.announcements || utilityBar.announcements.length === 0) && (
+                      <p className="text-xs text-gray-500 italic">No announcements configured. Default fallback will show.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
         {/* Best Brands Section */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-bold text-gray-900">Best Brands Carousel</h2>
-            <button onClick={addBrand} className="flex items-center gap-1 text-sm text-[#006747] font-medium hover:underline">
+          <div className="flex justify-between items-center mb-2 cursor-pointer select-none" onClick={() => toggleSection('bestBrands')}>
+            <div className="flex items-center gap-2">
+              {openSections.bestBrands ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+              <h2 className="text-lg font-bold text-gray-900">Best Brands Carousel</h2>
+            </div>
+            <button onClick={(e) => { e.stopPropagation(); addBrand(); }} className="flex items-center gap-1 text-sm text-[#006747] font-medium hover:underline">
               <Plus className="w-4 h-4" /> Add Brand
             </button>
           </div>
           
-          <div className="space-y-4">
+          {openSections.bestBrands && (
+          <div className="space-y-4 mt-6">
             {bestBrands.map((brand, idx) => (
               <div key={idx} className="flex gap-4 items-start p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -201,18 +281,23 @@ export default function PageSettingsAdmin() {
             ))}
             {bestBrands.length === 0 && <p className="text-sm text-gray-500 italic">No best brands configured.</p>}
           </div>
+          )}
         </div>
 
         {/* Shop By Category Section */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-bold text-gray-900">Shop By Category Cards</h2>
-            <button onClick={addCategory} className="flex items-center gap-1 text-sm text-[#006747] font-medium hover:underline">
+          <div className="flex justify-between items-center mb-2 cursor-pointer select-none" onClick={() => toggleSection('shopByCategory')}>
+            <div className="flex items-center gap-2">
+              {openSections.shopByCategory ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+              <h2 className="text-lg font-bold text-gray-900">Shop By Category Cards</h2>
+            </div>
+            <button onClick={(e) => { e.stopPropagation(); addCategory(); }} className="flex items-center gap-1 text-sm text-[#006747] font-medium hover:underline">
               <Plus className="w-4 h-4" /> Add Category
             </button>
           </div>
           
-          <div className="space-y-4">
+          {openSections.shopByCategory && (
+          <div className="space-y-4 mt-6">
             {shopByCategory.map((cat, idx) => (
               <div key={idx} className="flex gap-4 items-start p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -220,9 +305,15 @@ export default function PageSettingsAdmin() {
                     <label className="block text-xs font-medium text-gray-700 mb-1">Category Title</label>
                     <input type="text" value={cat.name} onChange={(e) => updateCategory(idx, 'name', e.target.value)} className="w-full text-sm border-gray-300 rounded-md" placeholder="e.g. DRIVERS" />
                   </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
-                    <input type="text" value={cat.desc} onChange={(e) => updateCategory(idx, 'desc', e.target.value)} className="w-full text-sm border-gray-300 rounded-md" placeholder="e.g. Maximum distance Unmatched power" />
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Description (Multi-line)</label>
+                    <textarea 
+                      value={cat.desc} 
+                      onChange={(e) => updateCategory(idx, 'desc', e.target.value)} 
+                      rows={2}
+                      className="w-full text-sm border-gray-300 rounded-md focus:ring-[#006747] focus:border-[#006747]" 
+                      placeholder="Line 1&#10;Line 2" 
+                    />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">URL Link</label>
@@ -278,18 +369,23 @@ export default function PageSettingsAdmin() {
             ))}
             {shopByCategory.length === 0 && <p className="text-sm text-gray-500 italic">No categories configured.</p>}
           </div>
+          )}
         </div>
 
         {/* Subcategories Section */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-bold text-gray-900">Top Clubs / Subcategories</h2>
-            <button onClick={addSubCategory} className="flex items-center gap-1 text-sm text-[#006747] font-medium hover:underline">
+          <div className="flex justify-between items-center mb-2 cursor-pointer select-none" onClick={() => toggleSection('subCategories')}>
+            <div className="flex items-center gap-2">
+              {openSections.subCategories ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+              <h2 className="text-lg font-bold text-gray-900">Top Clubs / Subcategories</h2>
+            </div>
+            <button onClick={(e) => { e.stopPropagation(); addSubCategory(); }} className="flex items-center gap-1 text-sm text-[#006747] font-medium hover:underline">
               <Plus className="w-4 h-4" /> Add Subcategory
             </button>
           </div>
           
-          <div className="space-y-4">
+          {openSections.subCategories && (
+          <div className="space-y-4 mt-6">
             {subCategories.map((cat, idx) => (
               <div key={idx} className="flex gap-4 items-start p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -342,7 +438,10 @@ export default function PageSettingsAdmin() {
             ))}
             {subCategories.length === 0 && <p className="text-sm text-gray-500 italic">No subcategories configured.</p>}
           </div>
+          )}
         </div>
+        </>
+        )}
       </div>
 
       {/* Toast Notification */}

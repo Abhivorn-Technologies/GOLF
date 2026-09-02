@@ -43,7 +43,9 @@ export default async function NewArrivals() {
                 <Link href={`/product/${product.slug || product.id}`} className="w-full h-full block">
                   <Image src={product.image.startsWith('http') || product.image.startsWith('/') ? product.image : `/images/${product.image}`} alt={product.name} fill className="object-contain p-4 mix-blend-multiply" />
                 </Link>
-                <QuickAddOverlay product={product} />
+                <div suppressHydrationWarning>
+                  <QuickAddOverlay product={product} />
+                </div>
               </div>
               
               <div className="flex flex-col">

@@ -40,6 +40,7 @@ export default function WishlistButton({ productId }: { productId: string }) {
       onClick={handleAddToWishlist}
       className={`absolute top-4 right-4 w-10 h-10 backdrop-blur-sm rounded-full flex items-center justify-center transition-all shadow-sm z-10 border border-gray-200 ${added ? 'bg-rose-50 text-rose-500 border-rose-200' : 'bg-white/90 text-gray-400 hover:text-rose-500 hover:scale-110 hover:bg-white'}`}
       title="Add to Wishlist"
+      suppressHydrationWarning
     >
       <Heart className={`w-5 h-5 ${added ? 'fill-current' : ''}`} />
     </button>

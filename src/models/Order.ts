@@ -9,16 +9,62 @@ const OrderSchema = new mongoose.Schema({
     priceAtPurchase: { type: Number, required: true },
     variants: { type: Map, of: String }
   }],
+
+  // Price breakdown
+  subtotal: { type: Number, default: 0 },
+  shippingCost: { type: Number, default: 0 },
+  taxAmount: { type: Number, default: 0 },
+  discountAmount: { type: Number, default: 0 },
+  couponCode: { type: String, default: null },
   totalAmount: { type: Number, required: true },
+
+  // Payment
   paymentStatus: { type: String, enum: ['pending', 'paid', 'failed'], default: 'pending' },
-  shippingStatus: { type: String, enum: ['processing', 'shipped', 'delivered', 'cancelled'], default: 'processing' },
-  shippingAddress: { 
+  paymentMethod: { type: String, default: 'Razorpay' },
+  razorpayOrderId: { type: String },
+  razorpayPaymentId: { type: String },
+
+  // Shipping
+  shippingStatus: {
+    type: String,
+    enum: ['processing', 'shipped', 'out_for_delivery', 'delivered', 'cancelled'],
+    default: 'processing'
+  },
+  shippingAddress: {
     name: { type: String, required: true },
+    phone: { type: String },
+    houseNumber: { type: String },
     street: { type: String, required: true },
+    area: { type: String },
+    landmark: { type: String },
     city: { type: String, required: true },
     state: { type: String, required: true },
-    zip: { type: String, required: true }
+    zip: { type: String, required: true },
+    country: { type: String, default: 'India' }
+  },
+  trackingId: { type: String },
+  courierName: { type: String },
+  estimatedDelivery: { type: Date },
+
+  // Post-purchase
+  cancellationReason: { type: String },
+  returnStatus: {
+    type: String,
+    enum: ['none', 'requested', 'approved', 'rejected', 'refunded'],
+    default: 'none'
+  },
+  returnReason: { type: String },
+  refundAmount: { type: Number },
+  feedback: {
+    rating: { type: Number, min: 1, max: 5 },
+    comment: { type: String },
+    createdAt: { type: Date }
   }
 }, { timestamps: true });
+
+// Clear cached model in dev to avoid stale schema on hot reload
+if (process.env.NODE_ENV !== 'production' && mongoose.models.Order) {
+  delete mongoose.models.Order;
+}
 
 export default mongoose.models.Order || mongoose.model('Order', OrderSchema);

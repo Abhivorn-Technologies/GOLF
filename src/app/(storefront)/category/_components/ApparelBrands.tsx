@@ -15,8 +15,12 @@ export default function ApparelBrands({ brands }: { brands: any[] }) {
 
         {/* 4-column Image Layout */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[24px]">
-          {brands.slice(0, 4).map((brand, index) => (
-            <Link href={brand.link || '#'} key={index} className="aspect-square bg-white border border-[#c1c9bf] rounded-[16px] flex items-center justify-center overflow-hidden hover:shadow-md transition-shadow group relative">
+          {brands.slice(0, 4).map((brand, index) => {
+            const isValidUrl = brand.link && brand.link.length > 1 && (brand.link.startsWith('/') || brand.link.startsWith('http'));
+            const targetHref = isValidUrl ? brand.link : `?brand=${encodeURIComponent(brand.name)}`;
+            
+            return (
+            <Link href={targetHref} key={index} className="aspect-square bg-white border border-[#c1c9bf] rounded-[16px] flex items-center justify-center overflow-hidden hover:shadow-md transition-shadow group relative">
               <div className={`absolute inset-0 bg-gradient-to-br ${brand.color || 'from-gray-100 to-gray-200'} opacity-10 group-hover:opacity-20 transition-opacity`}></div>
               <div className="relative w-full h-full flex items-center justify-center p-8">
                 {brand.image ? (
@@ -26,7 +30,7 @@ export default function ApparelBrands({ brands }: { brands: any[] }) {
                 )}
               </div>
             </Link>
-          ))}
+          )})}
         </div>
       </div>
     </section>

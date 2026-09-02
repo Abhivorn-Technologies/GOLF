@@ -5,20 +5,30 @@ import { Plus, Search, Edit2, Trash2 } from 'lucide-react';
 import dbConnect from '@/lib/mongodb';
 import Product from '@/models/Product';
 import DeleteProductButton from '@/components/admin/DeleteProductButton';
+import Pagination from '@/components/admin/Pagination';
 
-async function getProducts() {
+async function getProducts(page: number, limit: number) {
   try {
     await dbConnect();
-    const products = await Product.find({}).sort({ createdAt: -1 }).lean();
-    return products as any[];
+    const skip = (page - 1) * limit;
+    const [products, totalCount] = await Promise.all([
+      Product.find({}).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      Product.countDocuments({})
+    ]);
+    return { products: products as any[], totalCount };
   } catch (error) {
     console.error("Failed to fetch products", error);
-    return [];
+    return { products: [], totalCount: 0 };
   }
 }
 
-export default async function ProductsPage() {
-  const products = await getProducts();
+export default async function ProductsPage(props: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
+  const searchParams = await props.searchParams;
+  const page = Number(searchParams?.page) || 1;
+  const limit = 10;
+
+  const { products, totalCount } = await getProducts(page, limit);
+  const totalPages = Math.ceil(totalCount / limit);
 
   return (
     <div className="space-y-6">
@@ -36,14 +46,14 @@ export default async function ProductsPage() {
         </Link>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-gray-100 overflow-hidden">
-        <div className="p-4 border-b border-gray-100 flex gap-4 bg-gray-50/50">
+      <div className="bg-white rounded-[24px] shadow-[0_8px_40px_rgba(0,0,0,0.04)] border-0 overflow-hidden">
+        <div className="p-6 border-b border-gray-50 flex gap-4 bg-white items-center justify-between">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input 
               type="text" 
               placeholder="Search products..." 
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all text-sm"
+              className="w-full pl-11 pr-4 py-3 rounded-xl bg-gray-50/50 border-transparent focus:bg-white focus:border-gray-200 focus:ring-4 focus:ring-gray-50 transition-all text-sm outline-none"
               suppressHydrationWarning
             />
           </div>
@@ -52,49 +62,49 @@ export default async function ProductsPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
-              <tr className="border-b border-gray-100 text-sm text-gray-500 bg-white">
-                <th className="py-4 px-6 font-medium">Product</th>
-                <th className="py-4 px-6 font-medium">Category</th>
-                <th className="py-4 px-6 font-medium">Brand</th>
-                <th className="py-4 px-6 font-medium">Price</th>
-                <th className="py-4 px-6 font-medium text-right">Actions</th>
+              <tr className="border-b border-gray-50 text-xs uppercase tracking-wider text-gray-400 bg-white font-semibold">
+                <th className="py-5 px-8">Product</th>
+                <th className="py-5 px-8">Category</th>
+                <th className="py-5 px-8">Brand</th>
+                <th className="py-5 px-8">Price</th>
+                <th className="py-5 px-8 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="text-sm">
               {products.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-gray-500">
+                  <td colSpan={5} className="py-16 text-center text-gray-400 font-medium">
                     No products found. Add your first product to get started.
                   </td>
                 </tr>
               ) : (
                 products.map((product) => (
-                  <tr key={product._id.toString()} className="border-b border-gray-50 hover:bg-gray-50/80 transition-colors group">
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-gray-100 border border-gray-200 overflow-hidden relative flex-shrink-0">
+                  <tr key={product._id.toString()} className="border-b border-gray-50/50 hover:bg-gray-50/30 transition-colors group">
+                    <td className="py-4 px-8">
+                      <div className="flex items-center gap-5">
+                        <div className="w-14 h-14 rounded-xl bg-gray-50 overflow-hidden relative flex-shrink-0 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                           {product.images && product.images[0] && (product.images[0].startsWith('http') || product.images[0].startsWith('/')) ? (
                             <Image 
                               src={product.images[0]} 
                               alt={product.title || 'Product Image'}
                               fill
-                              className="object-cover"
+                              className="object-cover mix-blend-multiply"
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">No img</div>
+                            <div className="w-full h-full flex items-center justify-center text-gray-300 text-[10px] uppercase font-bold tracking-wider">No img</div>
                           )}
                         </div>
                         <div>
-                          <div className="font-semibold text-gray-900 group-hover:text-green-700 transition-colors line-clamp-1">{product.title || 'Untitled Product'}</div>
+                          <div className="font-bold text-gray-900 group-hover:text-black transition-colors line-clamp-1">{product.title || 'Untitled Product'}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="py-4 px-6 text-gray-600 capitalize">{product.category || product.type || '-'}</td>
-                    <td className="py-4 px-6 text-gray-600 font-medium">{product.brand}</td>
-                    <td className="py-4 px-6 font-bold text-gray-900">${product.price.toFixed(2)}</td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Link href={`/admin/products/${product._id.toString()}`} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                    <td className="py-4 px-8 text-gray-500 capitalize font-medium">{product.category || product.type || '-'}</td>
+                    <td className="py-4 px-8 text-gray-500 font-medium">{product.brand}</td>
+                    <td className="py-4 px-8 font-bold text-gray-900">${product.price.toFixed(2)}</td>
+                    <td className="py-4 px-8">
+                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Link href={`/admin/products/${product._id.toString()}`} className="p-2.5 text-gray-400 hover:text-black hover:bg-gray-100 rounded-xl transition-all">
                           <Edit2 className="w-4 h-4" />
                         </Link>
                         <DeleteProductButton productId={product._id.toString()} />
@@ -106,6 +116,7 @@ export default async function ProductsPage() {
             </tbody>
           </table>
         </div>
+        <Pagination currentPage={page} totalPages={totalPages} />
       </div>
     </div>
   );

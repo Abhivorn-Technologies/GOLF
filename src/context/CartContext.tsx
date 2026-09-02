@@ -1,14 +1,18 @@
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { ProductType } from '@/data/products';
 
 export interface ShippingAddress {
   name: string;
+  houseNumber?: string;
   street: string;
+  area?: string;
+  landmark?: string;
   city: string;
   state: string;
   zip: string;
+  phone?: string;
 }
 
 export interface CartItem {
@@ -25,8 +29,15 @@ interface CartContextType {
   removeFromCart: (cartItemId: string) => void;
   updateCartItemVariants: (cartItemId: string, variants: Record<string, string>) => void;
   cartCount: number;
+  subtotal: number;
+  shipping: number;
+  taxes: number;
+  total: number;
   shippingAddress: ShippingAddress | null;
   setShippingAddress: (address: ShippingAddress) => void;
+  couponCode: string | null;
+  couponDiscount: number;
+  setCoupon: (code: string | null, discount: number) => void;
   clearCart: () => void;
 }
 
@@ -35,6 +46,29 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [shippingAddress, setShippingAddress] = useState<ShippingAddress | null>(null);
+  const [couponCode, setCouponCodeState] = useState<string | null>(null);
+  const [couponDiscount, setCouponDiscountState] = useState(0);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    try {
+      const storedCart = localStorage.getItem('golf_cartItems');
+      if (storedCart) {
+        setCartItems(JSON.parse(storedCart));
+      }
+    } catch (e) {
+      console.error('Failed to parse cart items from localStorage', e);
+    }
+    setIsLoaded(true);
+  }, []);
+
+  // Save to localStorage when cart changes
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem('golf_cartItems', JSON.stringify(cartItems));
+    }
+  }, [cartItems, isLoaded]);
 
   const addToCart = (product: ProductType, quantity: number, variants?: Record<string, string>) => {
     setCartItems(prev => {
@@ -83,14 +117,38 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = () => {
     setCartItems([]);
+    setShippingAddress(null);
+    setCouponCodeState(null);
+    setCouponDiscountState(0);
+    localStorage.removeItem('golf_cartItems');
+  };
+
+  const setCoupon = (code: string | null, discount: number) => {
+    setCouponCodeState(code);
+    setCouponDiscountState(discount);
   };
 
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
+  const parsePrice = (price: any) => {
+    if (typeof price === 'number') return price;
+    const parsed = parseFloat(price?.toString().replace(/[^0-9.-]+/g, ''));
+    return isNaN(parsed) ? 0 : parsed;
+  };
+
+  const subtotal = cartItems.reduce((acc, item) => {
+    return acc + (parsePrice(item.product.price) * item.quantity);
+  }, 0);
+
+  const shipping = subtotal > 0 ? (subtotal > 10000 ? 0 : 500) : 0;
+  const taxes = subtotal * 0.18;
+  const total = subtotal + shipping + taxes - couponDiscount;
+
   return (
     <CartContext.Provider value={{ 
       cartItems, addToCart, updateQuantity, removeFromCart, updateCartItemVariants, cartCount,
-      shippingAddress, setShippingAddress, clearCart 
+      subtotal, shipping, taxes, total,
+      shippingAddress, setShippingAddress, couponCode, couponDiscount, setCoupon, clearCart 
     }}>
       {children}
     </CartContext.Provider>

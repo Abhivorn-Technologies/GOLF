@@ -2,21 +2,26 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ProductType } from '@/data/products';
 import { useCart } from '@/context/CartContext';
 import { Trash2, Heart, Check, ShoppingCart } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
 
+import ProductCard from '@/components/ProductCard';
+
 interface ProductDetailsProps {
   product: ProductType;
+  relatedProducts?: any[];
 }
 
-export default function ProductDetails({ product }: ProductDetailsProps) {
+export default function ProductDetails({ product, relatedProducts = [] }: ProductDetailsProps) {
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
   const { cartItems, addToCart, removeFromCart } = useCart();
   const { data: session } = useSession();
+  const router = useRouter();
 
   const getVariants = (val?: string) => val ? val.split(',').map(s => {
     const trimmed = s.trim();
@@ -82,7 +87,13 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
     setTimeout(() => {
       addToCart(product, quantity, selectedVariants);
       setIsAdding(false);
+      toast.success('Added to cart');
     }, 400);
+  };
+
+  const handleBuyNow = () => {
+    addToCart(product, quantity, selectedVariants);
+    router.push('/checkout/shipping');
   };
 
   const handleRemoveFromCart = () => {
@@ -198,9 +209,22 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
               {displayedPrice}
             </div>
 
-            <p className="font-['Hanken_Grotesk'] text-[#4c4546] text-[16px] leading-[1.6] mb-[32px]">
+            <p className="font-['Hanken_Grotesk'] text-[#4c4546] text-[16px] leading-[1.6] mb-[32px] whitespace-pre-wrap">
               {product.description || "Designed to provide customers with everything they need to know before making a purchase. Precision engineering for every shot."}
             </p>
+
+            {product.features && product.features.length > 0 && (
+              <div className="mb-[32px]">
+                <h4 className="font-['Hanken_Grotesk'] font-bold text-[16px] text-[#1b1c1c] uppercase tracking-wider mb-3">Key Features</h4>
+                <ul className="list-disc pl-5 space-y-2">
+                  {product.features.map((feature, idx) => (
+                    <li key={idx} className="font-['Hanken_Grotesk'] text-[#4c4546] text-[15px]">
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             <hr className="border-[#c1c9bf] mb-[32px]" />
 
@@ -336,7 +360,7 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
                   className="flex-1 h-[56px] bg-red-50 text-red-600 rounded-[8px] font-['Hanken_Grotesk'] font-medium text-[16px] flex items-center justify-center gap-[12px] hover:bg-red-100 transition-colors shadow-sm"
                 >
                   <Trash2 className="w-5 h-5" />
-                  <span>Remove from Cart</span>
+                  <span>Remove</span>
                 </button>
               ) : (
                 <button 
@@ -354,6 +378,15 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
                   )}
                 </button>
               )}
+
+              {/* Buy Now Button */}
+              <button 
+                onClick={handleBuyNow}
+                disabled={isAdding || !allSelected}
+                className="flex-1 h-[56px] bg-green-700 text-white rounded-[8px] font-['Hanken_Grotesk'] font-bold text-[16px] flex items-center justify-center hover:bg-green-800 transition-colors shadow-sm disabled:opacity-75 disabled:cursor-not-allowed"
+              >
+                Buy Now
+              </button>
             </div>
 
           </div>
@@ -361,33 +394,22 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
 
       </div>
 
-      {/* Product Features Section */}
-      <div className="bg-[#f0eded] border-t border-[#c1c9bf] py-[64px]">
-        <div className="max-w-[1280px] mx-auto px-[64px]">
-          <div className="flex flex-col items-center text-center max-w-3xl mx-auto">
-            <h2 className="font-['EB_Garamond'] font-bold text-[32px] text-[#1b1c1c] mb-[16px]">
-              Product Features
-            </h2>
-            <p className="font-['Hanken_Grotesk'] text-[#4c4546] text-[18px] leading-[1.6] mb-[32px]">
-              Detailed product description explaining the features, materials, and benefits. Designed to provide customers with everything they need to know before making a purchase.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-[24px] w-full text-left mt-[32px]">
-              <div className="bg-white p-[24px] rounded-[11px] shadow-sm">
-                <h4 className="font-['EB_Garamond'] font-bold text-[20px] text-[#1b1c1c] mb-[8px]">Premium Materials</h4>
-                <p className="font-['Hanken_Grotesk'] text-[#717b71] text-[14px]">Constructed with high-grade components ensuring durability and performance round after round.</p>
-              </div>
-              <div className="bg-white p-[24px] rounded-[11px] shadow-sm">
-                <h4 className="font-['EB_Garamond'] font-bold text-[20px] text-[#1b1c1c] mb-[8px]">Precision Engineered</h4>
-                <p className="font-['Hanken_Grotesk'] text-[#717b71] text-[14px]">Advanced technology integrated to provide optimal feel, distance, and control.</p>
-              </div>
-              <div className="bg-white p-[24px] rounded-[11px] shadow-sm">
-                <h4 className="font-['EB_Garamond'] font-bold text-[20px] text-[#1b1c1c] mb-[8px]">Tour Proven</h4>
-                <p className="font-['Hanken_Grotesk'] text-[#717b71] text-[14px]">Tested and trusted by professionals worldwide to deliver consistent results under pressure.</p>
-              </div>
-            </div>
+
+
+      {/* You Might Also Like */}
+      {relatedProducts && relatedProducts.length > 0 && (
+        <div className="max-w-[1280px] mx-auto px-[64px] py-[64px]">
+          <div className="flex flex-col gap-2 mb-8">
+            <h2 className="font-['Liberation_Serif'] text-3xl font-bold text-black">You Might Also Like</h2>
+            <div className="w-12 h-[2px] bg-black"></div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+            {relatedProducts.map(rp => (
+              <ProductCard key={rp.id} product={rp} />
+            ))}
           </div>
         </div>
-      </div>
+      )}
 
     </div>
   );

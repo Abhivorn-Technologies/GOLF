@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 
 
 import ProductDetails from "@/app/(storefront)/product/_components/ProductDetails";
-import { getProductById } from '@/data/products';
+import { getProductById, getProductsByCategory } from '@/data/products';
 import dbConnect from '@/lib/mongodb';
 import Product from '@/models/Product';
 import mongoose from 'mongoose';
@@ -47,7 +47,8 @@ export async function generateMetadata({ params }: ProductPageProps, parent: Res
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
-  let product = null;
+  let product: any = null;
+  let relatedProducts: any[] = [];
 
   try {
     await dbConnect();
@@ -77,6 +78,21 @@ export default async function ProductPage({ params }: ProductPageProps) {
           description: doc.description,
           features: doc.features,
         };
+
+        const relatedDocs = await Product.find({ 
+          category: doc.category, 
+          _id: { $ne: doc._id } 
+        }).limit(4).lean() as any[];
+
+        relatedProducts = relatedDocs.map(rDoc => ({
+          id: rDoc._id.toString(),
+          name: rDoc.title,
+          brand: rDoc.brand,
+          price: `₹${rDoc.price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
+          image: rDoc.images && rDoc.images.length > 0 ? rDoc.images[0] : 'placeholder.png',
+          category: rDoc.category,
+          slug: rDoc.slug
+        }));
     }
   } catch (error) {
     console.error("Failed to fetch product from DB", error);
@@ -85,6 +101,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
   // Fallback to static mock data if not found in DB
   if (!product) {
     product = getProductById(slug);
+    if (product) {
+      relatedProducts = getProductsByCategory(product.category)
+        .filter(p => p.id !== product.id)
+        .slice(0, 4);
+    }
   }
 
   if (!product) {
@@ -96,7 +117,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       
       
       <main className="flex-1">
-        <ProductDetails product={product} />
+        <ProductDetails product={product} relatedProducts={relatedProducts} />
       </main>
 
       

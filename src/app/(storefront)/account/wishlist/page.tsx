@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { HeartOff, ShoppingCart, Trash2 } from 'lucide-react';
+import AccountLogoutButton from "@/app/(storefront)/account/_components/AccountLogoutButton";
 import AccountSidebar from "@/app/(storefront)/account/_components/AccountSidebar";
 
 export default function WishlistPage() {
@@ -47,10 +48,12 @@ export default function WishlistPage() {
   };
 
   return (
-    <div className="bg-[#f4f4f5] min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 md:px-12 pt-8"></div>
+    <div className="bg-[#f4f4f5]">
+      <div className="w-full px-4 md:px-8 pt-8 flex justify-end">
+        <AccountLogoutButton />
+      </div>
       
-      <div className="max-w-7xl mx-auto px-4 md:px-12 py-8 flex flex-col md:flex-row gap-12 items-start">
+      <div className="w-full px-4 md:px-8 py-8 flex flex-col md:flex-row gap-8 md:gap-16 items-start">
         <AccountSidebar />
 
         <div className="flex-1 w-full max-w-4xl">

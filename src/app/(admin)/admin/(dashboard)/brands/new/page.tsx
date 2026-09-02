@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 export default function NewBrandPage() {
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="w-full space-y-6">
       <div className="flex items-center gap-4">
         <Link href="/admin/brands" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
           <ArrowLeft className="w-6 h-6 text-gray-500" />

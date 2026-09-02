@@ -23,7 +23,23 @@ export default async function Home() {
       title: b.title,
       subtitle: b.subtitle,
       imageUrl: b.imageUrl,
-      linkUrl: b.linkUrl
+      mobileImageUrl: b.mobileImageUrl,
+      linkUrl: b.linkUrl,
+      buttonText: b.buttonText,
+      titleColor: b.titleColor,
+      subtitleColor: b.subtitleColor,
+      overlayOpacity: b.overlayOpacity,
+      buttonColor: b.buttonColor,
+      buttonTextColor: b.buttonTextColor,
+      button2Text: b.button2Text,
+      button2Url: b.button2Url,
+      button2Color: b.button2Color,
+      button2TextColor: b.button2TextColor,
+      buttonSize: b.buttonSize,
+      titlePosition: b.titlePosition,
+      subtitlePosition: b.subtitlePosition,
+      buttonPosition: b.buttonPosition,
+      alignment: b.alignment
     }));
   } catch (err) {
     console.error("Local DB connection failed, using default hero banner", err);

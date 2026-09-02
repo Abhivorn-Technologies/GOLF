@@ -9,7 +9,65 @@ interface OrderSummaryProps {
 }
 
 export default function OrderSummary({ showCheckoutButton = false }: OrderSummaryProps) {
-  const { cartItems, updateCartItemVariants } = useCart();
+  const { cartItems, updateCartItemVariants, subtotal, shipping, taxes, total, couponCode: contextCouponCode, couponDiscount: contextCouponDiscount, setCoupon } = useCart();
+  const [couponCode, setCouponCode] = React.useState(contextCouponCode || '');
+  const [couponLabel, setCouponLabel] = React.useState('');
+  const [couponError, setCouponError] = React.useState('');
+  const [applyingCoupon, setApplyingCoupon] = React.useState(false);
+  const [availableCoupons, setAvailableCoupons] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    fetch('/api/coupons/active')
+      .then(res => res.json())
+      .then(data => {
+        if (data.coupons) setAvailableCoupons(data.coupons);
+      })
+      .catch(() => {});
+  }, []);
+
+  const applyCoupon = async () => {
+    handleApplyCouponClick();
+  };
+
+  const removeCoupon = () => {
+    setCouponCode('');
+    setCouponLabel('');
+    setCouponError('');
+    setCoupon(null, 0);
+  };
+
+  const applySpecificCoupon = (code: string) => {
+    setCouponCode(code);
+    // We cannot immediately apply here because setState is async, 
+    // but we can pass the code directly to a modified applyCoupon if needed.
+    // To keep it simple, we just set the code and let the user click apply,
+    // or we can invoke applyCoupon directly by passing the code.
+  };
+
+  // Update applyCoupon to optionally take a code
+  const handleApplyCouponClick = async (codeToApply = couponCode) => {
+    if (!codeToApply.trim()) return;
+    setApplyingCoupon(true);
+    setCouponError('');
+    try {
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: codeToApply.trim(), subtotal })
+      });
+      const data = await res.json();
+      if (res.ok && data.valid) {
+        setCouponCode(codeToApply.trim().toUpperCase());
+        setCouponLabel(data.description);
+        setCoupon(codeToApply.trim().toUpperCase(), data.discount);
+      } else {
+        setCouponError(data.error || 'Invalid coupon');
+        setCoupon(null, 0);
+      }
+    } catch { setCouponError('Failed to apply coupon'); }
+    finally { setApplyingCoupon(false); }
+  };
+
 
   const getVariants = (val?: string) => val ? val.split(',').map(s => {
     const trimmed = s.trim();
@@ -28,13 +86,7 @@ export default function OrderSummary({ showCheckoutButton = false }: OrderSummar
     return parseFloat(priceStr.replace(/[^0-9.-]+/g,""));
   };
 
-  const subtotal = cartItems.reduce((total, item) => {
-    return total + (parsePrice(item.product.price) * item.quantity);
-  }, 0);
 
-  const shipping = subtotal > 0 ? 500 : 0; // Flat ₹500 shipping if cart not empty
-  const taxes = subtotal * 0.18; // 18% tax assumption
-  const total = subtotal + shipping + taxes;
 
   const formatPrice = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -45,12 +97,17 @@ export default function OrderSummary({ showCheckoutButton = false }: OrderSummar
   };
 
   return (
-    <div className="bg-[#f8f9fa] border border-[#c4c6cc] rounded-[20px] p-[32px] w-full flex flex-col h-full min-h-[500px]">
+    <div className="bg-[#f8f9fa] border border-[#c4c6cc] rounded-[20px] p-[32px] w-full flex flex-col">
       
-      <div className="border-b border-[#c4c6cc] pb-[24px] mb-[24px]">
+      <div className="border-b border-[#c4c6cc] pb-[24px] mb-[24px] flex justify-between items-center">
         <h2 className="font-['Liberation_Serif'] font-bold text-[24px] text-black">
           Order Summary
         </h2>
+        {!showCheckoutButton && (
+          <Link href="/cart" className="text-sm font-bold text-gray-500 hover:text-black underline underline-offset-4 transition-colors">
+            Edit Cart
+          </Link>
+        )}
       </div>
 
       {/* Line Items */}
@@ -150,6 +207,63 @@ export default function OrderSummary({ showCheckoutButton = false }: OrderSummar
       </div>
 
       <div className="mt-auto">
+        {/* Coupon Code */}
+        <div className="flex flex-col gap-2 mb-6">
+          {contextCouponDiscount > 0 ? (
+            <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+              <div>
+                <span className="text-xs font-bold text-green-700 uppercase tracking-widest">Coupon Applied 🎉</span>
+                <p className="text-xs text-green-600 mt-0.5">{couponLabel || `Discount: -₹${contextCouponDiscount}`}</p>
+              </div>
+              <button onClick={removeCoupon} className="text-xs text-red-500 hover:text-red-700 font-bold">Remove</button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={couponCode}
+                onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError(''); }}
+                placeholder="Promo code"
+                onKeyDown={(e) => e.key === 'Enter' && applyCoupon()}
+                className="flex-1 border border-[#c4c6cc] rounded-xl px-4 py-2.5 text-sm font-['Hanken_Grotesk'] outline-none focus:border-black transition-colors uppercase"
+              />
+              <button
+                onClick={applyCoupon}
+                disabled={applyingCoupon || !couponCode.trim()}
+                className="px-4 py-2.5 bg-black text-white rounded-xl text-sm font-bold font-['Hanken_Grotesk'] hover:bg-gray-800 transition-colors disabled:opacity-50 whitespace-nowrap"
+              >
+                {applyingCoupon ? '...' : 'Apply'}
+              </button>
+            </div>
+          )}
+          {couponError && <p className="text-xs text-red-600 font-medium">{couponError}</p>}
+
+          {!contextCouponDiscount && availableCoupons.length > 0 && (
+            <div className="mt-2 flex flex-col gap-2">
+              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Available Offers</span>
+              <div className="flex flex-col gap-2 max-h-[140px] overflow-y-auto pr-1">
+                {availableCoupons.map((coupon, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleApplyCouponClick(coupon.code)}
+                    disabled={applyingCoupon || (coupon.minOrderAmount && subtotal < coupon.minOrderAmount)}
+                    className="flex flex-col text-left bg-gray-50 border border-gray-200 rounded-lg p-3 hover:bg-gray-100 transition-colors disabled:opacity-50 group"
+                  >
+                    <div className="flex justify-between items-center w-full">
+                      <span className="font-bold text-black text-xs font-mono bg-white px-2 py-0.5 rounded border border-gray-200 group-hover:border-gray-300">{coupon.code}</span>
+                      <span className="text-xs font-bold text-gray-500 group-hover:text-black transition-colors">Apply</span>
+                    </div>
+                    {coupon.description && <p className="text-[11px] text-gray-500 mt-1.5 leading-tight">{coupon.description}</p>}
+                    {coupon.minOrderAmount > subtotal && (
+                      <p className="text-[10px] text-red-500 mt-1 font-medium">Add ₹{(coupon.minOrderAmount - subtotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })} more to unlock</p>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Totals */}
         <div className="flex flex-col gap-[12px] font-['Hanken_Grotesk'] text-[15px] text-[#44474c]">
           <div className="flex justify-between">
@@ -161,9 +275,15 @@ export default function OrderSummary({ showCheckoutButton = false }: OrderSummar
             <span className="font-medium text-black">{shipping === 0 ? 'Free' : formatPrice(shipping)}</span>
           </div>
           <div className="flex justify-between">
-            <span>Taxes</span>
+            <span>Taxes (18% GST)</span>
             <span className="font-medium text-black">{formatPrice(taxes)}</span>
           </div>
+          {contextCouponDiscount > 0 && (
+            <div className="flex justify-between text-green-700">
+              <span className="font-bold">Discount</span>
+              <span className="font-bold">-{formatPrice(contextCouponDiscount)}</span>
+            </div>
+          )}
         </div>
 
         <div className="h-px bg-[#c4c6cc] w-full my-[24px]"></div>

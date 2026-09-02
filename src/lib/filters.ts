@@ -10,9 +10,8 @@ export async function getMegaMenuData() {
   } catch (error) {
     console.error("Error fetching mega menu data from DB:", error);
   }
-    
-  // Combine local mock data with any dynamic DB products to ensure base filters ALWAYS show up
-  const products = [...ALL_PRODUCTS, ...dbProducts];
+  // Only use dynamic DB products so the counts exactly match what's in the database
+  const products = dbProducts;
   
   const categories = ['Clubs', 'Shoes', 'Apparel', 'Bags', 'Balls', 'Accessories'];
   

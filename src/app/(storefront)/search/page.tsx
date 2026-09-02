@@ -44,7 +44,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-[32px]">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-[16px] md:gap-[32px]">
           {products.map((product) => (
             <div key={product._id} className="bg-white border border-[#c1c9bf] rounded-[16px] p-[24px] hover:shadow-md transition-shadow group flex flex-col h-full">
               <Link href={`/product/${product.slug || product._id}`} className="w-full aspect-[4/3] bg-[#fbf9f9] rounded-[8px] mb-[24px] overflow-hidden relative flex items-center justify-center">

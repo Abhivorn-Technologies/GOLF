@@ -54,13 +54,13 @@ export default async function FeaturedDeals() {
           {dealsToDisplay.length > 0 ? (
             dealsToDisplay.map((deal) => (
             <Link key={deal.id} href={`/product/${deal.slug || deal.id}`} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300 border border-gray-100 flex flex-col group cursor-pointer block">
-              <div className={`relative h-64 w-full bg-zinc-100 p-4`}>
+              <div className="relative w-full aspect-square bg-[#f8f9fa] overflow-hidden">
                 <span className="absolute top-4 left-4 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-sm uppercase tracking-wider shadow-sm z-10">
-                  {deal.discount}
+                  {deal.discount} OFF
                 </span>
                 <div className="w-full h-full flex items-center justify-center text-zinc-400 group-hover:scale-105 transition-transform duration-500 relative">
                   {deal.image ? (
-                    <Image src={deal.image.startsWith('http') || deal.image.startsWith('/') ? deal.image : `/images/${deal.image}`} alt={deal.name} fill className="object-contain p-4 mix-blend-multiply" />
+                    <Image src={deal.image.startsWith('http') || deal.image.startsWith('/') ? deal.image : `/images/${deal.image}`} alt={deal.name} fill sizes="300px" className="object-contain p-4 mix-blend-multiply" />
                   ) : (
                     <span>Product Image Placeholder</span>
                   )}
@@ -81,7 +81,7 @@ export default async function FeaturedDeals() {
                     )}
                   </div>
                   
-                  <button className="w-full bg-zinc-900 hover:bg-green-600 text-white font-bold py-4 rounded-xl transition-colors duration-300 uppercase tracking-wide text-sm">
+                  <button suppressHydrationWarning className="w-full bg-zinc-900 hover:bg-green-600 text-white font-bold py-4 rounded-xl transition-colors duration-300 uppercase tracking-wide text-sm">
                     Shop Now
                   </button>
                 </div>

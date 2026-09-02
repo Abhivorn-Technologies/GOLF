@@ -11,7 +11,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="min-h-screen bg-[#f8faf9] flex font-['Inter',sans-serif]">
+    <div className="h-screen bg-[#FAFAFA] flex font-sans selection:bg-black selection:text-white text-gray-900">
       <AdminSidebar />
 
       {/* Main Content */}
@@ -30,8 +30,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </header>
         
         {/* Page Content */}
-        <div className="flex-1 overflow-auto p-4 md:p-8 xl:p-10">
-          <div className="max-w-7xl mx-auto w-full">
+        <div className="flex-1 overflow-auto p-4 md:p-6 xl:p-8">
+          <div className="w-full">
             {children}
           </div>
         </div>

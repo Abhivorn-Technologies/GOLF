@@ -22,7 +22,7 @@ export default function CategoryProductGrid({ category }: { category: string }) 
       params.set('category', category);
       
       try {
-        const res = await fetch('/api/products/public?' + params.toString());
+        const res = await fetch('/api/products/public?' + params.toString(), { cache: 'no-store' });
         const json = await res.json();
         if (json.success) {
           setProducts(json.data);
@@ -49,8 +49,8 @@ export default function CategoryProductGrid({ category }: { category: string }) 
   return (
     <div className="flex-1 pb-[120px]">
       
-      {/* Product Grid - 2 Column Layout as per Figma */}
-      <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-[24px] gap-y-[32px] mb-[48px] transition-opacity duration-200 ${loading ? 'opacity-50' : 'opacity-100'}`}>
+      {/* Product Grid - 3 Column Layout */}
+      <div className={`grid grid-cols-2 md:grid-cols-3 gap-x-[16px] md:gap-x-[24px] gap-y-[24px] md:gap-y-[32px] mb-[48px] transition-opacity duration-200 ${loading ? 'opacity-50' : 'opacity-100'}`}>
         {products.length > 0 ? (
           products.map((product) => (
             <ProductCard key={product.id} product={product} />))
