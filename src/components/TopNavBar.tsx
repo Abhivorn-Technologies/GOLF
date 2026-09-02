@@ -70,7 +70,7 @@ export default function TopNavBar({ megaMenuData = {}, utilityBar }: { megaMenuD
         </button>
 
         <Link href="/" className="flex-1 flex items-center justify-center md:justify-start relative md:flex-shrink-0 md:flex-none">
-          <img src="/images/golf.png" alt="GolfPro Logo" className="h-10 md:h-12 w-auto object-contain scale-[1.2] md:scale-[1.5]" />
+          <img src="/images/golf.png" alt="GolfPro Logo" className="h-16 md:h-20 w-auto object-contain scale-[1.2] md:scale-[1.5]" />
         </Link>
 
         {/* Search Bar */}
