@@ -1,37 +1,29 @@
+"use client";
+
 import React from 'react';
 import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
-import dbConnect from '@/lib/mongodb';
-import Product from '@/models/Product';
 
-export default async function CategoriesGrid() {
-  let categories: { name: string, image: string | null }[] = [];
-  try {
-    await dbConnect();
-    // Get unique categories from the database
-    const distinctCategories = await Product.distinct('category');
-    
-    // For each category, find the latest product to use its image, ignoring placeholders
-    categories = await Promise.all(distinctCategories.map(async (cat: string) => {
-      const latestProduct = await Product.findOne({ 
-        category: cat, 
-        images: { $exists: true, $not: { $size: 0 } },
-        "images.0": { $ne: "placeholder.png" } 
-      })
-        .sort({ createdAt: -1 })
-        .lean();
-        
-      return {
-        name: cat,
-        image: latestProduct?.images?.[0] || null
-      };
-    }));
-  } catch (err) {
-    console.error("Failed to fetch categories", err);
-    // Fallback if DB fails
-    const fallbacks = ['Clubs', 'Shoes', 'Apparel', 'Accessories', 'Bags', 'Balls'];
-    categories = fallbacks.map(f => ({ name: f, image: null }));
+interface CategoriesGridProps {
+  categories?: { name: string; image: string | null }[];
+}
+
+function resolveImgSrc(src?: string | null) {
+  if (!src || typeof src !== 'string' || src.trim() === '' || src === 'placeholder.png' || src === '/placeholder.png' || src === 'null' || src === 'undefined') {
+    return '/images/golf.png';
   }
+  const clean = src.trim();
+  if (clean.startsWith('data:') || clean.startsWith('http://') || clean.startsWith('https://') || clean.startsWith('/')) {
+    return clean;
+  }
+  return `/images/${clean}`;
+}
+
+export default function CategoriesGrid({ categories: passedCategories }: CategoriesGridProps) {
+  // Use passed categories, or fallback to empty
+  const categories = passedCategories && passedCategories.length > 0
+    ? passedCategories
+    : ['Clubs', 'Shoes', 'Apparel', 'Accessories', 'Bags', 'Balls'].map(f => ({ name: f, image: null }));
 
   // Predefined subtitles for common categories for better UI, otherwise generic
   const getSubtitle = (cat: string) => {
@@ -64,13 +56,16 @@ export default async function CategoriesGrid() {
                 <span className="font-bold text-lg">{category.name.charAt(0).toUpperCase()}</span>
               </div>
 
-              {/* Background Image Placeholder or Real Image */}
+              {/* Background Image */}
               <div className="absolute inset-0 opacity-0 group-hover:opacity-20 bg-gradient-to-t from-zinc-900 via-zinc-900/50 to-transparent transition-opacity duration-300 z-10"></div>
-              {category.image && (
-                <div className="absolute inset-0 z-0">
-                  <img src={category.image.startsWith('http') || category.image.startsWith('/') ? category.image : `/images/${category.image}`} alt={category.name} className="w-full h-full object-contain p-8 mix-blend-multiply transition-transform duration-500 group-hover:scale-105" />
-                </div>
-              )}
+              <div className="absolute inset-0 z-0 p-8 flex items-center justify-center">
+                <img 
+                  src={resolveImgSrc(category.image)} 
+                  alt={category.name} 
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/images/golf.png'; }}
+                  className="w-full h-full object-contain mix-blend-multiply transition-transform duration-500 group-hover:scale-105" 
+                />
+              </div>
 
               <div className="relative z-20 flex justify-between items-end bg-white/90 backdrop-blur-sm p-4 rounded-xl border border-white/50 group-hover:bg-white transition-colors">
                 <div>

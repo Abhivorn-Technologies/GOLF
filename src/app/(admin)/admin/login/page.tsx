@@ -62,17 +62,17 @@ export default function AdminLoginPage() {
       </div>
 
       {/* Subtle Noise Texture */}
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none mix-blend-overlay"></div>
+      <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-[0.03] pointer-events-none mix-blend-overlay"></div>
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000008_1px,transparent_1px),linear-gradient(to_bottom,#00000008_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
 
-      <div className="w-full max-w-lg z-10 p-4 sm:p-0">
+      <div className="w-full max-w-sm z-10 p-4 sm:p-0">
         
         {/* Animated Border Wrapper */}
         <div className="relative group rounded-3xl">
           <div className="absolute -inset-1 bg-gradient-to-r from-gray-300 via-black to-gray-400 rounded-3xl blur opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200 animate-gradient-x"></div>
           
           {/* Main Glassmorphic Card */}
-          <div className="relative backdrop-blur-2xl bg-white/70 border border-white/40 shadow-2xl rounded-3xl overflow-hidden p-8 sm:p-12">
+          <div className="relative backdrop-blur-2xl bg-white/70 border border-white/40 shadow-2xl rounded-3xl overflow-hidden p-6 sm:p-8">
             
             <Link href="/" className="absolute right-6 top-6 p-2 text-gray-400 hover:text-black transition-all duration-300 rounded-full hover:bg-black/5 z-20">
               <svg width="14" height="14" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -80,27 +80,27 @@ export default function AdminLoginPage() {
               </svg>
             </Link>
 
-            <div className="mb-10 w-full flex flex-col items-center relative z-10">
-              <div className="relative w-40 h-16 flex items-center justify-center mb-4">
-                <Image src="/images/golf.png" alt="GolfPro Logo" fill sizes="160px" className="object-contain drop-shadow-sm" priority />
+            <div className="mb-6 w-full flex flex-col items-center relative z-10">
+              <div className="relative w-28 h-10 flex items-center justify-center mb-3">
+                <Image src="/images/golf.png" alt="GolfPro Logo" fill sizes="112px" className="object-contain drop-shadow-sm" priority />
               </div>
-              <h2 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-black via-gray-600 to-black tracking-tight mb-2 text-center drop-shadow-sm">
+              <h2 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-black via-gray-600 to-black tracking-tight mb-1 text-center drop-shadow-sm">
                 Admin Portal
               </h2>
-              <p className="text-gray-500 text-sm font-medium tracking-wide">
+              <p className="text-gray-500 text-xs font-medium tracking-wide">
                 Secure access to Lorven Golf systems.
               </p>
             </div>
 
             {error && (
-              <div className="w-full mb-8 p-4 bg-red-50 text-red-600 text-sm rounded-xl text-center font-bold border border-red-100 flex items-center justify-center gap-2 backdrop-blur-md">
-                <ShieldAlert className="w-5 h-5" />
+              <div className="w-full mb-4 p-3 bg-red-50 text-red-600 text-xs rounded-xl text-center font-bold border border-red-100 flex items-center justify-center gap-2 backdrop-blur-md">
+                <ShieldAlert className="w-4 h-4" />
                 {error}
               </div>
             )}
 
             {isMounted ? (
-              <form onSubmit={handleLogin} className="w-full space-y-6 relative z-10" suppressHydrationWarning>
+              <form onSubmit={handleLogin} className="w-full space-y-4 relative z-10" suppressHydrationWarning>
                 <div className="space-y-2 relative group/input">
                   <label className="text-[11px] font-bold text-gray-600 uppercase tracking-widest pl-1">Email Address</label>
                   <div className="relative">
@@ -111,7 +111,7 @@ export default function AdminLoginPage() {
                       name="email"
                       type="email" 
                       placeholder="Enter your email" 
-                      className="w-full pl-12 pr-4 py-4 rounded-xl border border-white/50 text-black placeholder:text-gray-400 focus:outline-none focus:border-black/30 focus:ring-2 focus:ring-black/10 transition-all bg-white/50 focus:bg-white shadow-inner backdrop-blur-sm font-medium"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-white/50 text-black placeholder:text-gray-400 focus:outline-none focus:border-black/30 focus:ring-2 focus:ring-black/10 transition-all bg-white/50 focus:bg-white shadow-inner backdrop-blur-sm font-medium text-sm"
                       required
                       suppressHydrationWarning
                     />
@@ -130,7 +130,7 @@ export default function AdminLoginPage() {
                       name="password"
                       type={showPassword ? "text" : "password"} 
                       placeholder="••••••••" 
-                      className="w-full pl-12 pr-12 py-4 rounded-xl border border-white/50 text-black placeholder:text-gray-400 focus:outline-none focus:border-black/30 focus:ring-2 focus:ring-black/10 transition-all bg-white/50 focus:bg-white shadow-inner backdrop-blur-sm font-medium"
+                      className="w-full pl-10 pr-10 py-3 rounded-xl border border-white/50 text-black placeholder:text-gray-400 focus:outline-none focus:border-black/30 focus:ring-2 focus:ring-black/10 transition-all bg-white/50 focus:bg-white shadow-inner backdrop-blur-sm font-medium text-sm"
                       required
                       suppressHydrationWarning
                     />
@@ -146,7 +146,7 @@ export default function AdminLoginPage() {
                   </div>
                 </div>
 
-                <div className="pt-6">
+                <div className="pt-3">
                   <button 
                     type="submit" 
                     disabled={loading}
@@ -154,10 +154,8 @@ export default function AdminLoginPage() {
                     suppressHydrationWarning
                   >
                     <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-gray-900 via-black to-gray-900 opacity-90 group-hover:opacity-100 transition-opacity"></div>
-                    {/* Shimmer effect inside button */}
                     <div className="absolute inset-0 w-[200%] h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shimmer"></div>
-                    
-                    <div className="relative w-full px-8 py-4 flex items-center justify-center">
+                    <div className="relative w-full px-6 py-3 flex items-center justify-center">
                       <span className="font-extrabold text-white tracking-widest uppercase text-xs flex items-center gap-2">
                         {loading ? "Authenticating..." : "Sign In to Dashboard"}
                         {!loading && <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}

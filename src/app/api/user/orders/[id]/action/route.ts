@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth/next';
 import dbConnect from '@/lib/mongodb';
 import Order from '@/models/Order';
 
+import Product from '@/models/Product';
+
 export async function POST(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
@@ -33,6 +35,25 @@ export async function POST(
       }
       order.shippingStatus = 'cancelled';
       order.cancellationReason = reason || 'No reason provided';
+
+      // Restock inventory
+      for (const item of order.products) {
+        if (item.product) {
+          const variantId = item.variants?.get ? item.variants.get('variantId') : item.variants?.variantId;
+          if (variantId) {
+            await Product.updateOne(
+              { _id: item.product, "variants.id": variantId },
+              { $inc: { "variants.$.stockCount": item.quantity } }
+            );
+          } else {
+            await Product.findByIdAndUpdate(item.product, {
+              $inc: { stockCount: item.quantity },
+              inStock: true
+            });
+          }
+        }
+      }
+
       await order.save();
       return NextResponse.json({ success: true, message: 'Order cancelled successfully', order });
     }
@@ -42,8 +63,16 @@ export async function POST(
         return NextResponse.json({ error: 'Only delivered orders can be returned' }, { status: 400 });
       }
       if (order.returnStatus !== 'none') {
-        return NextResponse.json({ error: 'Return already requested' }, { status: 400 });
+        return NextResponse.json({ error: 'Return already requested for this order' }, { status: 400 });
       }
+
+      // Enforce 7-day return policy window
+      const deliveredTime = new Date(order.updatedAt || order.createdAt).getTime();
+      const returnWindowMs = 7 * 24 * 60 * 60 * 1000; // 7 days in ms
+      if ((Date.now() - deliveredTime) > returnWindowMs) {
+        return NextResponse.json({ error: 'The 7-day return window for this order has expired.' }, { status: 400 });
+      }
+
       order.returnStatus = 'requested';
       order.returnReason = reason || 'No reason provided';
       await order.save();

@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     
     if (body.title && !body.slug) {
-      let baseSlug = body.title.toString().toLowerCase()
+      const baseSlug = body.title.toString().toLowerCase()
         .replace(/\s+/g, '-')
         .replace(/[^\w\-]+/g, '')
         .replace(/\-\-+/g, '-')

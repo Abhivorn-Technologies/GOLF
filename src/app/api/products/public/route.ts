@@ -1,15 +1,35 @@
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
+import connectMongo from '@/lib/mongodb';
 import Product from '@/models/Product';
+import { ALL_PRODUCTS } from '@/data/products';
 
 export const dynamic = 'force-dynamic';
 
+const productCache = new Map<string, { timestamp: number; payload: any }>();
+const CACHE_TTL_MS = 5000; // 5 seconds
+
+export function clearProductCache() {
+  productCache.clear();
+}
+
 export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const cacheKey = searchParams.toString();
+  
+  const now = Date.now();
+  if (productCache.has(cacheKey)) {
+    const cached = productCache.get(cacheKey)!;
+    if (now - cached.timestamp < CACHE_TTL_MS) {
+      return NextResponse.json(cached.payload);
+    }
+  }
+
   try {
-    const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1', 10) || 1;
     const limit = parseInt(searchParams.get('limit') || '12', 10) || 12;
     const skip = (page - 1) * limit;
+
 
     const category = searchParams.get('category');
     const minPrice = searchParams.get('minPrice');
@@ -20,11 +40,9 @@ export async function GET(request: Request) {
 
     const saleOnly = searchParams.get('sale');
 
-    if (!mongoose.connections[0].readyState) {
-      await mongoose.connect(process.env.MONGODB_URI as string);
-    }
+    await connectMongo();
 
-    let query: any = {};
+    const query: any = {};
 
     if (category) {
       query.category = new RegExp('^' + category + '$', 'i');
@@ -58,7 +76,7 @@ export async function GET(request: Request) {
       query.gender = { $in: genders.map(g => new RegExp('^' + g + '$', 'i')) };
     }
 
-    const staticFields = ['category', 'minPrice', 'maxPrice', 'brand', 'style', 'gender', 'sale', 'newArrivals', 'type', 'loft', 'size', 'page', 'limit'];
+    const staticFields = ['category', 'minprice', 'maxprice', 'brand', 'style', 'gender', 'sale', 'newarrivals', 'type', 'loft', 'size', 'page', 'limit'];
     
     // Explicitly handle fields that might be capitalized in searchParams but are lowercase in DB
     const lowerCaseSearchKeys = Array.from(searchParams.keys()).map(k => k.toLowerCase());
@@ -125,7 +143,7 @@ export async function GET(request: Request) {
       };
     });
 
-    return NextResponse.json({ 
+    const responsePayload = {
       success: true, 
       data: transformedProducts,
       pagination: {
@@ -134,16 +152,28 @@ export async function GET(request: Request) {
         currentPage: page,
         pageSize: limit
       }
-    }, {
-      headers: {
-        'Cache-Control': 'no-store, max-age=0'
+    };
+
+    productCache.set(cacheKey, { timestamp: Date.now(), payload: responsePayload });
+
+    return NextResponse.json(responsePayload);
+
+  } catch (error: any) {
+    console.error('Error fetching public products from DB, using fallback:', error.message);
+    const category = searchParams.get('category');
+    const filtered = category 
+      ? ALL_PRODUCTS.filter((p: any) => p.category?.toLowerCase() === category.toLowerCase())
+      : ALL_PRODUCTS;
+
+    return NextResponse.json({ 
+      success: true, 
+      data: filtered,
+      pagination: {
+        totalItems: filtered.length,
+        totalPages: 1,
+        currentPage: 1,
+        pageSize: filtered.length
       }
     });
-  } catch (error: any) {
-    console.error('Error fetching public products:', error);
-    return NextResponse.json(
-      { success: false, error: error.message || 'Internal Server Error' },
-      { status: 500 }
-    );
   }
 }

@@ -26,7 +26,7 @@ export default function OrderSuccessPage() {
     date.setDate(date.getDate() + 3);
     setDeliveryDate(date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }));
     
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const parsePrice = (priceStr: string | number) => {
@@ -93,7 +93,10 @@ export default function OrderSuccessPage() {
               <span className="text-xs font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2">
                 <Truck className="w-4 h-4 text-black" /> Est. Delivery
               </span>
-              <span className="text-2xl font-black text-green-700 tracking-tight">{deliveryDate}</span>
+              <span className="text-xl md:text-2xl font-black text-green-700 tracking-tight">{deliveryDate}</span>
+              <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider bg-gray-100 px-2 py-0.5 rounded w-fit">
+                5–9 Business Working Days
+              </span>
             </div>
 
           </div>
@@ -117,8 +120,10 @@ export default function OrderSuccessPage() {
                       <span className="font-bold text-black uppercase tracking-tight">{item.product.name}</span>
                       <span className="text-gray-500 text-sm font-medium">Qty: {item.quantity}</span>
                       {item.variants && Object.keys(item.variants).length > 0 && (
-                        <div className="text-[11px] text-gray-400 font-bold flex gap-2 uppercase tracking-widest mt-1">
-                          {Object.entries(item.variants).map(([k,v]) => <span key={k} className="bg-gray-100 px-2 py-0.5 rounded">{k}: {v as string}</span>)}
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {Object.entries(item.variants)
+                            .filter(([k]) => k !== 'variantId')
+                            .map(([k,v]) => <span key={k} className="bg-gray-100 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-widest">{k}: {v as string}</span>)}
                         </div>
                       )}
                     </div>

@@ -3,6 +3,18 @@
 import React, { useState } from 'react';
 import { UploadCloud, X, Plus, Trash2, Save, Loader2, Check } from 'lucide-react';
 import Image from 'next/image';
+import toast from 'react-hot-toast';
+
+function resolveImgSrc(src?: string) {
+  if (!src || typeof src !== 'string' || src.trim() === '' || src === '/placeholder.png' || src === 'placeholder.png' || src === 'null' || src === 'undefined') {
+    return '/images/golf.png';
+  }
+  const clean = src.trim();
+  if (clean.startsWith('data:') || clean.startsWith('http://') || clean.startsWith('https://') || clean.startsWith('/')) {
+    return clean;
+  }
+  return `/images/${clean}`;
+}
 
 export default function PromotionalBlocksManager({ 
   activeTab, 
@@ -17,6 +29,11 @@ export default function PromotionalBlocksManager({
   const [bestBrands, setBestBrands] = useState<any[]>(initialSettings?.bestBrands || []);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  React.useEffect(() => {
+    setShopByCategory(initialSettings?.shopByCategory || []);
+    setBestBrands(initialSettings?.bestBrands || []);
+  }, [initialSettings]);
 
   const handleImageUpload = async (file: File) => {
     const formData = new FormData();
@@ -43,7 +60,7 @@ export default function PromotionalBlocksManager({
         setBestBrands(newArr);
       }
     } catch (err) {
-      alert("Failed to upload image");
+      toast.error("Failed to upload image");
     }
   };
 
@@ -55,7 +72,7 @@ export default function PromotionalBlocksManager({
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (e) {
-      alert("Error saving settings");
+      toast.error("Error saving settings");
     } finally {
       setSaving(false);
     }
@@ -102,7 +119,12 @@ export default function PromotionalBlocksManager({
               <div className="w-[140px] h-[180px] shrink-0 bg-gray-50 rounded-xl border border-gray-200 flex flex-col items-center justify-center relative overflow-hidden group/img">
                 {item.image ? (
                   <>
-                    <Image src={item.image} alt="Preview" fill className="object-cover" />
+                    <img 
+                      src={resolveImgSrc(item.image)} 
+                      alt="Preview" 
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/images/golf.png'; }}
+                      className="w-full h-full object-cover" 
+                    />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
                       <label className="cursor-pointer bg-white text-black text-xs font-bold px-3 py-1.5 rounded-full">
                         Change
@@ -165,7 +187,12 @@ export default function PromotionalBlocksManager({
               <div className="w-full aspect-[3/4] bg-gray-50 rounded-xl border border-gray-200 flex flex-col items-center justify-center relative overflow-hidden group/img">
                 {item.image ? (
                   <>
-                    <Image src={item.image} alt="Preview" fill className="object-cover" />
+                    <img 
+                      src={resolveImgSrc(item.image)} 
+                      alt="Preview" 
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/images/golf.png'; }}
+                      className="w-full h-full object-cover" 
+                    />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
                       <label className="cursor-pointer bg-white text-black text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
                         Change

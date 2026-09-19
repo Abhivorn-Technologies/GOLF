@@ -11,8 +11,13 @@ import { useCart } from '@/context/CartContext';
 export default function CartPage() {
   const { cartItems, updateQuantity, removeFromCart } = useCart();
 
-  const parsePrice = (priceStr: string) => {
-    return parseFloat(priceStr.replace(/[^0-9.-]+/g,""));
+  const parsePrice = (priceStr: string | number) => {
+    if (typeof priceStr === 'number') return priceStr;
+    if (typeof priceStr === 'string') {
+      const parsed = parseFloat(priceStr.replace(/[^0-9.-]+/g, ""));
+      return isNaN(parsed) ? 0 : parsed;
+    }
+    return 0;
   };
 
   const formatPrice = (amount: number) => {
@@ -65,17 +70,24 @@ export default function CartPage() {
 
                   {/* Items */}
                   <div className="flex flex-col divide-y divide-[#c4c6cc]">
-                    {cartItems.map((item) => (
-                      <div key={item.product.id} className="flex items-center px-[32px] py-[24px]">
+                    {cartItems.map((item, idx) => (
+                      <div key={`${item.cartItemId || item.product?.id || 'item'}-${idx}`} className="flex items-center px-[32px] py-[24px]">
                         
                         {/* Product Info */}
                         <div className="flex-[2] flex gap-[24px] items-center">
                           <div className="w-[120px] h-[120px] bg-[#f8f9fa] border border-[#c4c6cc] rounded-[8px] flex items-center justify-center p-[8px]">
-                            <img 
-                              src={item.product.image.startsWith('http') ? item.product.image : `/images/${item.product.image}`} 
-                              alt={item.product.name} 
-                              className="w-full h-full object-contain mix-blend-multiply"
-                            />
+                            {(() => {
+                              const rawImg = item.product?.image || (Array.isArray(item.product?.images) ? item.product.images[0] : null) || '';
+                              const imgSrc = !rawImg ? '/images/golf.png' : (rawImg.startsWith('http') || rawImg.startsWith('data:') || rawImg.startsWith('/') ? rawImg : `/images/${rawImg}`);
+                              return (
+                                <img 
+                                  src={imgSrc} 
+                                  alt={item.product?.name || 'Product'} 
+                                  onError={(e) => { (e.target as HTMLImageElement).src = '/images/golf.png'; }}
+                                  className="w-full h-full object-contain mix-blend-multiply"
+                                />
+                              );
+                            })()}
                           </div>
                           <div className="flex flex-col gap-[4px]">
                             <span className="font-['Hanken_Grotesk'] text-[12px] font-bold text-[#717b71] uppercase tracking-widest">
@@ -84,14 +96,38 @@ export default function CartPage() {
                             <Link href={`/product/${item.product.slug || item.product.id}`} className="font-['Hanken_Grotesk'] font-bold text-[18px] text-black hover:text-[#006747] transition-colors">
                               {item.product.name}
                             </Link>
-                            <span className="font-['Hanken_Grotesk'] text-[15px] text-[#44474c] mt-[4px]">
-                              {formatPrice(parsePrice(item.product.price))}
-                            </span>
+                            
+                            {/* Price display with discount handling */}
+                            {(() => {
+                              const salePrice = parsePrice(item.product.price);
+                              const regPrice = parsePrice(item.product.numericCompareAtPrice || item.product.compareAtPrice || 0);
+                              const hasDiscount = regPrice > salePrice;
+                              const discountPct = hasDiscount ? Math.round(((regPrice - salePrice) / regPrice) * 100) : 0;
+                              return (
+                                <div className="flex items-center gap-2 mt-[4px]">
+                                  <span className="font-['Hanken_Grotesk'] text-[15px] font-bold text-black">
+                                    {formatPrice(salePrice)}
+                                  </span>
+                                  {hasDiscount && (
+                                    <>
+                                      <span className="font-['Hanken_Grotesk'] text-[13px] text-gray-400 line-through">
+                                        {formatPrice(regPrice)}
+                                      </span>
+                                      <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">
+                                        {discountPct}% OFF
+                                      </span>
+                                    </>
+                                  )}
+                                </div>
+                              );
+                            })()}
                             
                             {item.variants && Object.keys(item.variants).length > 0 && (
-                              <div className="font-['Hanken_Grotesk'] text-[13px] text-gray-500 mt-2 flex flex-wrap gap-x-3">
-                                {Object.entries(item.variants).map(([k, v]) => (
-                                  <span key={k}>{k}: <span className="font-medium text-gray-700">{v}</span></span>
+                              <div className="font-['Hanken_Grotesk'] text-[13px] text-[#44474c] flex flex-wrap gap-x-3 mt-[8px]">
+                                {Object.entries(item.variants)
+                                  .filter(([k]) => k !== 'variantId')
+                                  .map(([k, v]) => (
+                                  <span key={k}>{k}: <span className="font-semibold text-black">{v as string}</span></span>
                                 ))}
                               </div>
                             )}
@@ -129,9 +165,23 @@ export default function CartPage() {
 
                         {/* Total & Remove */}
                         <div className="flex-[1] flex items-center justify-end gap-[16px]">
-                          <span className="font-['Hanken_Grotesk'] font-bold text-[18px] text-black">
-                            {formatPrice(parsePrice(item.product.price) * item.quantity)}
-                          </span>
+                          {(() => {
+                            const salePrice = parsePrice(item.product.price);
+                            const regPrice = parsePrice(item.product.numericCompareAtPrice || item.product.compareAtPrice || 0);
+                            const hasDiscount = regPrice > salePrice;
+                            return (
+                              <div className="flex flex-col items-end">
+                                <span className="font-['Hanken_Grotesk'] font-bold text-[18px] text-black">
+                                  {formatPrice(salePrice * item.quantity)}
+                                </span>
+                                {hasDiscount && (
+                                  <span className="font-['Hanken_Grotesk'] text-[12px] text-gray-400 line-through">
+                                    {formatPrice(regPrice * item.quantity)}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })()}
                           <button 
                             onClick={() => removeFromCart(item.cartItemId)}
                             className="hidden md:flex text-gray-400 hover:text-red-500 transition-colors"

@@ -91,7 +91,10 @@ export default function PageSettingsAdmin() {
     setSaving(false);
   };
 
-  const addBrand = () => setBestBrands([...bestBrands, { id: Date.now().toString(), name: '', link: 'Shop Now', color: 'from-gray-100 to-gray-200', image: '' }]);
+  const addBrand = () => {
+    setOpenSections(prev => ({ ...prev, bestBrands: true }));
+    setBestBrands([...bestBrands, { id: Date.now().toString(), name: '', link: 'Shop Now', color: 'from-gray-100 to-gray-200', image: '' }]);
+  };
   const removeBrand = (idx: number) => setBestBrands(bestBrands.filter((_, i) => i !== idx));
   const updateBrand = (idx: number, field: string, value: string) => {
     const newBrands = [...bestBrands];
@@ -99,7 +102,10 @@ export default function PageSettingsAdmin() {
     setBestBrands(newBrands);
   };
 
-  const addCategory = () => setShopByCategory([...shopByCategory, { id: Date.now().toString(), name: '', desc: '', href: '', color: 'from-gray-100 to-gray-200', image: '', icon: '' }]);
+  const addCategory = () => {
+    setOpenSections(prev => ({ ...prev, shopByCategory: true }));
+    setShopByCategory([...shopByCategory, { id: Date.now().toString(), name: '', desc: '', href: '', color: 'from-gray-100 to-gray-200', image: '', icon: '' }]);
+  };
   const removeCategory = (idx: number) => setShopByCategory(shopByCategory.filter((_, i) => i !== idx));
   const updateCategory = (idx: number, field: string, value: string) => {
     const newCats = [...shopByCategory];
@@ -107,7 +113,10 @@ export default function PageSettingsAdmin() {
     setShopByCategory(newCats);
   };
 
-  const addSubCategory = () => setSubCategories([...subCategories, { id: Date.now().toString(), name: '', image: '' }]);
+  const addSubCategory = () => {
+    setOpenSections(prev => ({ ...prev, subCategories: true }));
+    setSubCategories([...subCategories, { id: Date.now().toString(), name: '', image: '' }]);
+  };
   const removeSubCategory = (idx: number) => setSubCategories(subCategories.filter((_, i) => i !== idx));
   const updateSubCategory = (idx: number, field: string, value: string) => {
     const newSubCats = [...subCategories];

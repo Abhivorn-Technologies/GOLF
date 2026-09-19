@@ -7,6 +7,7 @@ import { ALL_PRODUCTS, ProductType } from '@/data/products';
 import { ShoppingCart, Heart, Filter, X } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useSession } from 'next-auth/react';
+import toast from 'react-hot-toast';
 
 function ProductsContent() {
   const router = useRouter();
@@ -81,27 +82,60 @@ function ProductsContent() {
 
   // 2. Extract unique dynamic attributes from the CURRENTly displayed products
   // So if you're in 'Clubs', you see 'Loft' filter. If in 'Shoes', you see 'Size'.
+  // 2. Extract unique dynamic attributes from displayed products
   const availableFilters = useMemo(() => {
     const filters: Record<string, Set<string>> = {};
     
     baseProducts.forEach(p => {
-      // Add Brand as a dynamic filter
+      // Add Brand filter
       if (p.brand) {
         if (!filters['Brand']) filters['Brand'] = new Set();
         filters['Brand'].add(p.brand);
       }
       
-      // Add Gender as a dynamic filter
+      // Add Category filter
+      if (p.category) {
+        const catName = p.category.charAt(0).toUpperCase() + p.category.slice(1).toLowerCase();
+        if (!filters['Category']) filters['Category'] = new Set();
+        filters['Category'].add(catName);
+      }
+
+      // Add Gender filter
       if (p.gender) {
         if (!filters['Gender']) filters['Gender'] = new Set();
         filters['Gender'].add(p.gender);
       }
 
-      // Add dynamic custom attributes (if any exist on the product object)
+      // Add Type filter
+      if ((p as any).type) {
+        if (!filters['Type']) filters['Type'] = new Set();
+        filters['Type'].add((p as any).type);
+      }
+
+      // Add Style filter
+      if ((p as any).style) {
+        if (!filters['Style']) filters['Style'] = new Set();
+        filters['Style'].add((p as any).style);
+      }
+
+      // Add Size filter
+      if ((p as any).size) {
+        const sizes = (p as any).size.split(',').map((s: string) => s.trim());
+        sizes.forEach((sz: string) => {
+          if (sz) {
+            if (!filters['Size']) filters['Size'] = new Set();
+            filters['Size'].add(sz);
+          }
+        });
+      }
+
+      // Add dynamic custom attributes
       const dynamicAttrs = (p as any).attributes || [];
       dynamicAttrs.forEach((attr: { key: string, value: string }) => {
-        if (!filters[attr.key]) filters[attr.key] = new Set();
-        filters[attr.key].add(attr.value);
+        if (attr.key && attr.value) {
+          if (!filters[attr.key]) filters[attr.key] = new Set();
+          filters[attr.key].add(attr.value);
+        }
       });
     });
 
@@ -111,20 +145,26 @@ function ProductsContent() {
   // 3. Apply the checked dynamic filters
   const displayedProducts = useMemo(() => {
     return baseProducts.filter(p => {
-      // Check every active filter category
       for (const [key, selectedValues] of Object.entries(selectedAttributes)) {
-        if (selectedValues.length === 0) continue; // nothing selected for this filter category
+        if (selectedValues.length === 0) continue;
         
         let productValue: string | undefined;
         
         if (key === 'Brand') productValue = p.brand;
+        else if (key === 'Category') productValue = p.category ? p.category.charAt(0).toUpperCase() + p.category.slice(1).toLowerCase() : undefined;
         else if (key === 'Gender') productValue = p.gender;
-        else {
+        else if (key === 'Type') productValue = (p as any).type;
+        else if (key === 'Style') productValue = (p as any).style;
+        else if (key === 'Size') {
+          const productSizes = (p as any).size ? (p as any).size.split(',').map((s: string) => s.trim()) : [];
+          const hasMatch = selectedValues.some(val => productSizes.includes(val));
+          if (!hasMatch) return false;
+          continue;
+        } else {
           const dynamicAttr = (p as any).attributes?.find((a: any) => a.key === key);
           productValue = dynamicAttr?.value;
         }
 
-        // If product doesn't have the attribute, or its value isn't checked, hide it
         if (!productValue || !selectedValues.includes(productValue)) {
           return false;
         }
@@ -179,12 +219,35 @@ function ProductsContent() {
         {/* Header Section */}
         <div className="mb-8 border-b border-gray-200 pb-8">
           
-          <div className="flex flex-col md:flex-row justify-between items-end">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
             <div>
               <h1 className="text-4xl md:text-5xl font-black text-black uppercase tracking-tighter mb-2">
                 {brandParam ? `${brandParam} Gear` : (filter === 'All' ? 'Shop All Gear' : `Shop ${filter}`)}
               </h1>
               <p className="text-gray-500 font-medium">Browse our premium collection of golf equipment.</p>
+            </div>
+
+            {/* Category Quick Filter Pills */}
+            <div className="flex flex-wrap gap-2 pt-4 md:pt-0">
+              {categories.map((cat) => {
+                const isActive = filter === cat;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => {
+                      setFilter(cat);
+                      clearFilters();
+                    }}
+                    className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all border ${
+                      isActive
+                        ? 'bg-zinc-900 text-white border-zinc-900 shadow-sm'
+                        : 'bg-white text-zinc-600 border-gray-200 hover:border-zinc-400 hover:text-zinc-900'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -206,8 +269,9 @@ function ProductsContent() {
           
           {/* Dynamic Sidebar */}
           <aside className={`
-            fixed inset-0 z-50 bg-white p-6 overflow-y-auto transition-transform transform lg:relative lg:transform-none lg:w-64 lg:bg-transparent lg:p-0 lg:z-0 lg:block flex-shrink-0
-            ${isMobileFiltersOpen ? 'translate-x-0' : '-translate-x-full'}
+            fixed inset-0 z-50 bg-white p-6 overflow-y-auto transition-transform transform 
+            lg:sticky lg:top-24 lg:z-10 lg:w-64 lg:bg-white lg:rounded-2xl lg:p-6 lg:border lg:border-gray-100 lg:shadow-[0_4px_20px_rgba(0,0,0,0.03)] lg:transform-none lg:translate-x-0 lg:block flex-shrink-0
+            ${isMobileFiltersOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
           `}>
             <div className="flex justify-between items-center lg:hidden mb-8 border-b pb-4">
               <h2 className="text-xl font-black uppercase tracking-wider">Filters</h2>
@@ -235,20 +299,18 @@ function ProductsContent() {
                     {Array.from(filterValues).sort().map(val => {
                       const isChecked = selectedAttributes[filterKey]?.includes(val) || false;
                       return (
-                        <label key={val} className="flex items-center gap-3 cursor-pointer group">
-                          <input 
-                            type="checkbox" 
-                            className="hidden" 
-                            checked={isChecked}
-                            onChange={() => toggleAttribute(filterKey, val)}
-                          />
+                        <div 
+                          key={val} 
+                          className="flex items-center gap-3 cursor-pointer group"
+                          onClick={() => toggleAttribute(filterKey, val)}
+                        >
                           <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
                             isChecked ? 'bg-black border-black text-white' : 'border-gray-300 bg-white group-hover:border-black'
                           }`}>
                             {isChecked && <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
                           </div>
                           <span className="text-sm text-gray-600 font-medium group-hover:text-black transition-colors">{val}</span>
-                        </label>
+                        </div>
                       );
                     })}
                   </div>
@@ -333,7 +395,7 @@ function ProductsContent() {
                         <button 
                           onClick={() => {
                             addToCart(product, 1);
-                            alert('Added to cart!');
+                            toast.success('Added to cart!');
                           }}
                           className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center hover:bg-gray-800 transition-colors shadow-sm"
                         >

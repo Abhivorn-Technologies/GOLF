@@ -44,6 +44,8 @@ const OrderSchema = new mongoose.Schema({
   },
   trackingId: { type: String },
   courierName: { type: String },
+  deliveryAgentName: { type: String },
+  deliveryAgentPhone: { type: String },
   estimatedDelivery: { type: Date },
 
   // Post-purchase
@@ -62,9 +64,7 @@ const OrderSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-// Clear cached model in dev to avoid stale schema on hot reload
-if (process.env.NODE_ENV !== 'production' && mongoose.models.Order) {
-  delete mongoose.models.Order;
-}
+OrderSchema.index({ user: 1, createdAt: -1 });
+OrderSchema.index({ customerEmail: 1 });
 
 export default mongoose.models.Order || mongoose.model('Order', OrderSchema);

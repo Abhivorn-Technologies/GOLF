@@ -5,6 +5,12 @@ import dbConnect from '@/lib/mongodb';
 import Brand from '@/models/Brand';
 import Link from 'next/link';
 
+function resolveImg(src: string) {
+  if (!src) return '/images/golf.png';
+  if (src.startsWith('data:') || src.startsWith('http') || src.startsWith('/')) return src;
+  return `/images/${src}`;
+}
+
 async function getBrands() {
   try {
     await dbConnect();
@@ -39,7 +45,7 @@ export default async function BrandsPage() {
         {brands.length === 0 ? (
           <div className="col-span-full bg-white rounded-2xl p-12 text-center border border-gray-100 shadow-sm">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Image src="/images/golf.png" alt="Icon" width={32} height={32} className="opacity-50 grayscale" />
+              <img src="/images/golf.png" alt="Icon" className="w-8 h-8 opacity-50 grayscale" />
             </div>
             <h3 className="text-lg font-bold text-gray-900 mb-2">No Brands Found</h3>
             <p className="text-gray-500 mb-6">You haven't created any brands yet.</p>
@@ -53,12 +59,11 @@ export default async function BrandsPage() {
             <div key={brand._id.toString()} className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.04)] overflow-hidden flex flex-col group hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-all">
               
               {/* Image Preview */}
-              <div className="w-full h-24 relative bg-gray-50 p-2 border-b border-gray-100">
-                <Image 
-                  src={brand.imageUrl} 
+              <div className="w-full h-24 relative bg-gray-50 p-2 border-b border-gray-100 flex items-center justify-center">
+                <img 
+                  src={resolveImg(brand.imageUrl || '')} 
                   alt={brand.name} 
-                  fill 
-                  className="object-contain p-2"
+                  className="w-full h-full object-contain p-2"
                 />
                 <div className="absolute top-2 right-2">
                   <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded backdrop-blur-sm ${brand.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`}>

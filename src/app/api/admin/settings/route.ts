@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import PageSettings from '@/models/PageSettings';
 import { verifyAdminSession } from '@/lib/adminAuth';
+import { clearPageSettingsCache } from '@/lib/pageSettings';
+import { clearProductCache } from '@/app/api/products/public/route';
 
 export async function GET(request: Request) {
   try {
@@ -9,7 +11,7 @@ export async function GET(request: Request) {
     const page = searchParams.get('page') || 'clubs';
     
     await dbConnect();
-    let settings = await PageSettings.findOne({ page }).lean();
+    const settings = await PageSettings.findOne({ page }).lean();
     
     return NextResponse.json(settings || {});
   } catch (error) {
@@ -34,6 +36,9 @@ export async function POST(request: Request) {
       { $set: data },
       { new: true, upsert: true }
     );
+
+    clearPageSettingsCache(page);
+    clearProductCache();
 
     return NextResponse.json(updated);
   } catch (error: any) {

@@ -6,15 +6,18 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
+import { validatePassword } from '@/lib/validations';
+
 export default function RegisterPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const [newsletterSubscribed, setNewsletterSubscribed] = useState(true);
+
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
 
     const formData = new FormData(e.currentTarget);
@@ -22,11 +25,19 @@ export default function RegisterPage() {
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
+    const passwordVal = validatePassword(password);
+    if (!passwordVal.isValid) {
+      setError(passwordVal.errorMessage || 'Invalid password');
+      return;
+    }
+
+    setLoading(true);
+
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, newsletterSubscribed }),
       });
 
       const data = await res.json();
@@ -92,7 +103,7 @@ export default function RegisterPage() {
             />
           </div>
 
-          <div className="mb-8">
+          <div className="mb-6">
             <label className="block text-xs font-bold text-gray-900 mb-1.5 uppercase tracking-wider">Password</label>
             <div className="relative w-full">
               <input 
@@ -112,6 +123,20 @@ export default function RegisterPage() {
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+          </div>
+
+          {/* Newsletter Opt-in Checkbox */}
+          <div className="mb-6 flex items-start gap-3">
+            <input 
+              id="newsletter-signup"
+              type="checkbox"
+              checked={newsletterSubscribed}
+              onChange={(e) => setNewsletterSubscribed(e.target.checked)}
+              className="w-4 h-4 mt-0.5 rounded border-gray-300 text-black focus:ring-black accent-black cursor-pointer"
+            />
+            <label htmlFor="newsletter-signup" className="text-xs text-gray-600 leading-relaxed cursor-pointer select-none">
+              Subscribe to newsletter for exclusive deals, promotional offers, and discount alerts.
+            </label>
           </div>
 
           <button 

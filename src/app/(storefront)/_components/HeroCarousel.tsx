@@ -7,6 +7,7 @@ interface Banner {
   _id: string;
   title: string;
   subtitle?: string;
+  eyebrow?: string;
   imageUrl: string;
   mobileImageUrl?: string;
   linkUrl?: string;
@@ -20,9 +21,11 @@ interface Banner {
   alignment?: 'left' | 'center' | 'right';
   titleColor?: string;
   subtitleColor?: string;
+  eyebrowColor?: string;
   overlayOpacity?: number;
   titlePosition?: { x: number; y: number };
   subtitlePosition?: { x: number; y: number };
+  eyebrowPosition?: { x: number; y: number };
   buttonPosition?: { x: number; y: number };
   buttonSize?: 'sm' | 'md' | 'lg' | 'xl';
 }
@@ -42,7 +45,7 @@ export default function HeroCarousel({ banners }: { banners: Banner[] }) {
     });
 
     const observer = new ResizeObserver((entries) => {
-      for (let entry of entries) {
+      for (const entry of entries) {
         setContainerSize({
           width: entry.contentRect.width,
           height: entry.contentRect.height
@@ -68,7 +71,7 @@ export default function HeroCarousel({ banners }: { banners: Banner[] }) {
         <div className="relative z-10 max-w-4xl mx-auto px-8">
           <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter mb-6">Elevate Your Game</h1>
           <p className="text-xl md:text-2xl text-zinc-300 font-medium mb-10 max-w-2xl mx-auto">Discover the latest gear from top brands to take your performance to the next level.</p>
-          <button className="bg-green-600 hover:bg-green-500 text-white font-bold py-4 px-12 rounded-xl transition-colors uppercase tracking-widest shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+          <button suppressHydrationWarning className="bg-green-600 hover:bg-green-500 text-white font-bold py-4 px-12 rounded-xl transition-colors uppercase tracking-widest shadow-lg hover:shadow-xl transform hover:-translate-y-1">
             Shop Now
           </button>
         </div>
@@ -77,14 +80,44 @@ export default function HeroCarousel({ banners }: { banners: Banner[] }) {
   }
 
   return (
-    <section className="relative w-full bg-gray-100 overflow-hidden">
-      {/* Container wrapper for aspect ratio: Mobile vs Desktop */}
-      <div className="w-full min-h-[500px] md:min-h-0 md:aspect-[16/5] relative overflow-hidden" ref={containerRef}>
-        
+    <section className="relative w-full bg-gray-100 overflow-hidden flex items-center justify-center">
+      <div 
+        className="w-full relative overflow-hidden" 
+        ref={containerRef}
+      >
+        {/* INVISIBLE SPACER: This forces the container to perfectly match the height of the banner image on ALL devices without any empty gray gaps */}
+        {banners.length > 0 && (
+          <>
+            <img 
+              src={banners[0].mobileImageUrl || banners[0].imageUrl} 
+              className="w-full h-auto block md:hidden invisible pointer-events-none" 
+              alt="spacer" 
+            />
+            <img 
+              src={banners[0].imageUrl} 
+              className="w-full h-auto hidden md:block invisible pointer-events-none" 
+              alt="spacer" 
+            />
+          </>
+        )}
+
         {banners.map((banner, index) => {
-          const titlePos = banner.titlePosition || { x: 10, y: 20 };
-          const subtitlePos = banner.subtitlePosition || { x: 10, y: 40 };
-          const buttonPos = banner.buttonPosition || { x: 10, y: 60 };
+          const getPos = (pos: {x: number, y: number} | undefined, dx: number, dy: number) => {
+            if (!pos) return { x: dx, y: dy };
+            if (pos.x === 10 && (pos.y === 20 || pos.y === 40 || pos.y === 60)) return { x: dx, y: dy };
+            return pos;
+          };
+          const titlePos = getPos(banner.titlePosition, 192, 120);
+          const subtitlePos = getPos(banner.subtitlePosition, 192, 240);
+          const buttonPos = getPos(banner.buttonPosition, 192, 360);
+
+
+          const targetUrl = banner.linkUrl && banner.linkUrl !== '#' ? banner.linkUrl : '/products';
+          const isFullBannerClickable = !banner.buttonText && !banner.button2Text;
+          const SlideWrapper = isFullBannerClickable ? Link : 'div';
+          const wrapperProps = isFullBannerClickable 
+            ? { href: targetUrl, className: "absolute inset-0 block cursor-pointer" } 
+            : { className: "absolute inset-0" };
 
           return (
             <div 
@@ -93,37 +126,58 @@ export default function HeroCarousel({ banners }: { banners: Banner[] }) {
                 index === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
               }`}
             >
-              {/* Desktop Image */}
-              <div 
-                className={`absolute inset-0 bg-cover bg-center ${banner.mobileImageUrl ? 'hidden md:block' : 'block'}`}
-                style={{ backgroundImage: `url(${banner.imageUrl})` }}
-              ></div>
-              
-              {/* Mobile Image (if provided) */}
-              {banner.mobileImageUrl && (
+              <SlideWrapper {...(wrapperProps as any)}>
+                {/* Desktop Image */}
                 <div 
-                  className="absolute inset-0 bg-cover bg-center block md:hidden"
-                  style={{ backgroundImage: `url(${banner.mobileImageUrl})` }}
+                  className={`absolute inset-0 w-full h-full bg-cover bg-center ${banner.mobileImageUrl ? 'hidden md:block' : 'block'}`}
+                  style={{ backgroundImage: `url(${banner.imageUrl})` }}
                 ></div>
-              )}
-              
-              <div 
-                className="absolute inset-0"
-                style={{ backgroundColor: `rgba(0,0,0,${(banner.overlayOpacity ?? 40) / 100})` }}
-              ></div>
+                
+                {/* Mobile Image (if provided) */}
+                {banner.mobileImageUrl && (
+                  <div 
+                    className="absolute inset-0 w-full h-full bg-cover bg-center block md:hidden"
+                    style={{ backgroundImage: `url(${banner.mobileImageUrl})` }}
+                  ></div>
+                )}
+                
+                {banner.overlayOpacity && banner.overlayOpacity > 0 ? (
+                  <div 
+                    className="absolute inset-0"
+                    style={{ backgroundColor: `rgba(0,0,0,${banner.overlayOpacity / 100})` }}
+                  ></div>
+                ) : null}
+              </SlideWrapper>
               
               {/* MOBILE LAYOUT: Flex centered stacking */}
               <div className="absolute inset-0 flex flex-col justify-center items-center text-center px-6 md:hidden z-20">
-                {banner.title && (
+                
+                {banner.eyebrow && (
                   <div 
-                    className={`transition-all duration-700 delay-300 transform ${
+                    className={`w-full max-w-[100vw] overflow-hidden transition-all duration-700 delay-200 transform ${
                       index === currentIndex ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
                     }`}
                   >
-                    <div className="wysiwyg-content">
+                    <div className="wysiwyg-content w-full force-mobile-reset">
                       <div 
-                        className="w-full font-bold [&_p]:m-0 drop-shadow-md mb-6 text-4xl leading-none [&_span]:!leading-none"
-                        style={{ color: banner.titleColor || '#ffffff', padding: 0, overflow: 'visible' }}
+                        className="w-full font-medium [&_p]:m-0 drop-shadow mb-4 text-lg leading-tight uppercase tracking-wider break-words whitespace-normal"
+                        style={{ color: banner.eyebrowColor || '#ffffff', padding: 0 }}
+                        dangerouslySetInnerHTML={{ __html: banner.eyebrow }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {banner.title && (
+                  <div 
+                    className={`w-full max-w-[100vw] overflow-hidden transition-all duration-700 delay-300 transform ${
+                      index === currentIndex ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
+                    }`}
+                  >
+                    <div className="wysiwyg-content w-full force-mobile-reset">
+                      <div 
+                        className="w-full font-bold [&_p]:m-0 drop-shadow-md mb-6 text-4xl leading-none break-words whitespace-normal"
+                        style={{ color: banner.titleColor || '#ffffff', padding: 0 }}
                         dangerouslySetInnerHTML={{ __html: banner.title }}
                       />
                     </div>
@@ -132,14 +186,14 @@ export default function HeroCarousel({ banners }: { banners: Banner[] }) {
                 
                 {banner.subtitle && (
                   <div 
-                    className={`transition-all duration-700 delay-500 transform ${
+                    className={`w-full max-w-[100vw] overflow-hidden transition-all duration-700 delay-500 transform ${
                       index === currentIndex ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
                     }`}
                   >
-                    <div className="wysiwyg-content">
+                    <div className="wysiwyg-content w-full force-mobile-reset">
                       <div 
-                        className="w-full font-medium [&_p]:m-0 drop-shadow mb-10 text-xl leading-tight [&_span]:!leading-tight"
-                        style={{ color: banner.subtitleColor || '#e4e4e7', padding: 0, overflow: 'visible' }}
+                        className="w-full font-medium [&_p]:m-0 drop-shadow mb-10 text-xl leading-tight break-words whitespace-normal"
+                        style={{ color: banner.subtitleColor || '#e4e4e7', padding: 0 }}
                         dangerouslySetInnerHTML={{ __html: banner.subtitle }}
                       />
                     </div>
@@ -147,13 +201,13 @@ export default function HeroCarousel({ banners }: { banners: Banner[] }) {
                 )}
                 
                 <div 
-                  className={`flex gap-4 flex-wrap justify-center w-full transition-all duration-700 delay-700 transform ${
+                  className={`flex gap-4 flex-wrap justify-center w-full max-w-[100vw] transition-all duration-700 delay-700 transform ${
                     index === currentIndex ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
                   }`}
                 >
                   {banner.buttonText && (
                     <Link 
-                      href={banner.linkUrl || '#'}
+                      href={banner.linkUrl && banner.linkUrl !== '#' ? banner.linkUrl : '/products'}
                       className="inline-block font-bold py-3.5 px-6 rounded-2xl uppercase tracking-widest shadow-lg transition-transform hover:-translate-y-1 text-sm"
                       style={{ backgroundColor: banner.buttonColor || '#16a34a', color: banner.buttonTextColor || '#ffffff' }}
                     >
@@ -162,7 +216,7 @@ export default function HeroCarousel({ banners }: { banners: Banner[] }) {
                   )}
                   {banner.button2Text && (
                     <Link 
-                      href={banner.button2Url || '#'}
+                      href={banner.button2Url && banner.button2Url !== '#' ? banner.button2Url : '/sale'}
                       className="inline-block font-bold py-3.5 px-6 rounded-2xl uppercase tracking-widest shadow-lg transition-transform hover:-translate-y-1 text-sm"
                       style={{ backgroundColor: banner.button2Color || '#ffffff', color: banner.button2TextColor || '#000000' }}
                     >
@@ -172,21 +226,40 @@ export default function HeroCarousel({ banners }: { banners: Banner[] }) {
                 </div>
               </div>
 
-              {/* DESKTOP LAYOUT: Virtual 1920x600 Drag and Drop Positioning */}
+                                          {/* DESKTOP LAYOUT: Virtual 1280x400 Drag and Drop Positioning */}
               <div 
-                className="hidden md:block absolute origin-top-left z-20"
+                className="hidden md:block absolute origin-top-left z-20 text-[48px]"
                 style={{ 
-                  width: '1920px', 
-                  height: '600px', 
-                  transform: containerSize.width ? `scale(${containerSize.width / 1920})` : 'scale(1)',
+                  width: '1280px', 
+                  height: '400px', 
+                  transform: containerSize.width ? `scale(${containerSize.width / 1280})` : 'scale(1)',
                 }}
               >
+                
+                {banner.eyebrow && (
+                  <div 
+                    className={`absolute transition-all duration-700 delay-200`}
+                    style={{ 
+                      transform: `translate(${banner.eyebrowPosition?.x ?? 192}px, ${(banner.eyebrowPosition?.y ?? 20) + (index === currentIndex ? 0 : 16)}px)`,
+                      opacity: index === currentIndex ? 1 : 0
+                    }}
+                  >
+                    <div className="wysiwyg-content p-2">
+                      <div 
+                        className="w-full font-medium [&_p]:m-0 drop-shadow leading-tight [&_span]:!leading-tight uppercase tracking-wider text-lg"
+                        style={{ color: banner.eyebrowColor || '#ffffff', padding: 0, overflow: 'visible' }}
+                        dangerouslySetInnerHTML={{ __html: banner.eyebrow }}
+                      />
+                    </div>
+                  </div>
+                )}
                 {banner.title && (
                   <div 
-                    className={`absolute transition-all duration-700 delay-300 transform ${
-                      index === currentIndex ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-                    }`}
-                    style={{ left: `${titlePos?.x ?? 192}px`, top: `${titlePos?.y ?? 120}px` }}
+                    className={`absolute transition-all duration-700 delay-300`}
+                    style={{ 
+                      transform: `translate(${banner.titlePosition?.x ?? 192}px, ${(banner.titlePosition?.y ?? 40) + (index === currentIndex ? 0 : 16)}px)`,
+                      opacity: index === currentIndex ? 1 : 0
+                    }}
                   >
                     <div className="wysiwyg-content p-2">
                       <div 
@@ -200,10 +273,11 @@ export default function HeroCarousel({ banners }: { banners: Banner[] }) {
                 
                 {banner.subtitle && (
                   <div 
-                    className={`absolute transition-all duration-700 delay-500 transform ${
-                      index === currentIndex ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-                    }`}
-                    style={{ left: `${subtitlePos?.x ?? 192}px`, top: `${subtitlePos?.y ?? 240}px` }}
+                    className={`absolute transition-all duration-700 delay-500`}
+                    style={{ 
+                      transform: `translate(${banner.subtitlePosition?.x ?? 192}px, ${(banner.subtitlePosition?.y ?? 140) + (index === currentIndex ? 0 : 16)}px)`,
+                      opacity: index === currentIndex ? 1 : 0
+                    }}
                   >
                     <div className="wysiwyg-content p-2">
                       <div 
@@ -216,14 +290,15 @@ export default function HeroCarousel({ banners }: { banners: Banner[] }) {
                 )}
                 
                 <div 
-                  className={`absolute flex gap-4 p-2 transition-all duration-700 delay-700 transform ${
-                    index === currentIndex ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-                  }`}
-                  style={{ left: `${buttonPos?.x ?? 192}px`, top: `${buttonPos?.y ?? 360}px` }}
+                  className={`absolute flex gap-4 p-2 transition-all duration-700 delay-700`}
+                  style={{ 
+                    transform: `translate(${banner.buttonPosition?.x ?? 192}px, ${(banner.buttonPosition?.y ?? 240) + (index === currentIndex ? 0 : 16)}px)`,
+                    opacity: index === currentIndex ? 1 : 0
+                  }}
                 >
                   {banner.buttonText && (
                     <Link 
-                      href={banner.linkUrl || '#'}
+                      href={banner.linkUrl && banner.linkUrl !== '#' ? banner.linkUrl : '/products'}
                       className={`inline-block font-bold rounded-2xl uppercase tracking-widest shadow-lg transition-transform hover:-translate-y-1 ${
                         banner.buttonSize === 'sm' ? 'py-3 px-6 text-base' :
                         banner.buttonSize === 'lg' ? 'py-5 px-10 text-xl' :
@@ -237,7 +312,7 @@ export default function HeroCarousel({ banners }: { banners: Banner[] }) {
                   )}
                   {banner.button2Text && (
                     <Link 
-                      href={banner.button2Url || '#'}
+                      href={banner.button2Url && banner.button2Url !== '#' ? banner.button2Url : '/sale'}
                       className={`inline-block font-bold rounded-2xl uppercase tracking-widest shadow-lg transition-transform hover:-translate-y-1 ${
                         banner.buttonSize === 'sm' ? 'py-3 px-6 text-base' :
                         banner.buttonSize === 'lg' ? 'py-5 px-10 text-xl' :

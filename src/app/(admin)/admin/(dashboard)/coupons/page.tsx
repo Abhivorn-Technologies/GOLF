@@ -81,10 +81,13 @@ export default function CouponsPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const deactivate = async (id: string) => {
-    if (!confirm('Deactivate this coupon?')) return;
-    await fetch('/api/admin/coupons', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+  const [deactivatingId, setDeactivatingId] = useState<string | null>(null);
+
+  const confirmDeactivate = async () => {
+    if (!deactivatingId) return;
+    await fetch('/api/admin/coupons', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: deactivatingId }) });
     toast.success('Coupon deactivated');
+    setDeactivatingId(null);
     fetchCoupons();
   };
 
@@ -196,7 +199,7 @@ export default function CouponsPage() {
                         <button onClick={() => handleEdit(c)} className="text-blue-500 hover:text-blue-700 transition-colors font-medium text-xs">
                           Edit
                         </button>
-                        <button onClick={() => deactivate(c._id)} className="text-red-400 hover:text-red-600 transition-colors">
+                        <button onClick={() => setDeactivatingId(c._id)} className="text-red-400 hover:text-red-600 transition-colors">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
@@ -214,6 +217,32 @@ export default function CouponsPage() {
           onPageChange={(p) => setPage(p)} 
         />
       </div>
+
+      {deactivatingId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl flex flex-col gap-4 border border-gray-100 animate-in fade-in zoom-in-95 duration-150">
+            <div>
+              <h3 className="font-bold text-gray-900 text-base">Deactivate Coupon</h3>
+              <p className="text-xs text-gray-500 mt-1 font-medium">Are you sure you want to deactivate this coupon? Customers will no longer be able to use it.</p>
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={() => setDeactivatingId(null)}
+                className="flex-1 py-2.5 px-4 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeactivate}
+                className="flex-1 py-2.5 px-4 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-colors"
+              >
+                Deactivate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

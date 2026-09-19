@@ -6,6 +6,12 @@ import Banner from '@/models/Banner';
 import Link from 'next/link';
 import DeleteBannerButton from './_components/DeleteBannerButton';
 
+function resolveImg(src: string) {
+  if (!src) return '/images/golf.png';
+  if (src.startsWith('data:') || src.startsWith('http') || src.startsWith('/')) return src;
+  return `/images/${src}`;
+}
+
 async function getBanners() {
   try {
     await dbConnect();
@@ -45,7 +51,7 @@ export default async function BannersPage() {
         {banners.length === 0 ? (
           <div className="bg-white rounded-2xl p-12 text-center border border-gray-100 shadow-sm">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Image src="/images/golf.png" alt="Icon" width={32} height={32} className="opacity-50 grayscale" />
+              <img src="/images/golf.png" alt="Icon" className="w-8 h-8 opacity-50 grayscale" />
             </div>
             <h3 className="text-lg font-bold text-gray-900 mb-2">No Banners Found</h3>
             <p className="text-gray-500 mb-6">You haven't created any homepage banners yet.</p>
@@ -64,11 +70,10 @@ export default async function BannersPage() {
               
               {/* Image Preview */}
               <div className="w-full md:w-1/3 lg:w-1/4 h-48 md:h-auto relative bg-gray-100 border-r border-gray-100">
-                <Image 
-                  src={banner.imageUrl} 
+                <img 
+                  src={resolveImg(banner.imageUrl || '')} 
                   alt={plainTitle || 'Hero Banner'} 
-                  fill 
-                  className="object-cover"
+                  className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
                   <span className="text-white text-xs font-bold uppercase tracking-wider bg-black/50 px-2 py-1 rounded backdrop-blur-sm">

@@ -1,42 +1,19 @@
 import React from 'react';
 import Link from 'next/link';
-import dbConnect from '@/lib/mongodb';
-import Product from '@/models/Product';
-import Image from 'next/image';
+import WishlistButton from '@/components/WishlistButton';
 
+function resolveImg(src: string) {
+  if (!src) return '/images/golf.png';
+  if (src.startsWith('data:') || src.startsWith('http') || src.startsWith('/')) return src;
+  return `/images/${src}`;
+}
 
+interface FeaturedDealsProps {
+  deals?: any[];
+}
 
-export default async function FeaturedDeals() {
-  let liveDeals: any[] = [];
-
-  try {
-    await dbConnect();
-    const products = await Product.find({ isTopDeal: true }).limit(6).lean();
-    
-    if (products && products.length > 0) {
-      liveDeals = products.map((p: any) => {
-        let discountBadge = 'SALE';
-        if (p.compareAtPrice && p.compareAtPrice > p.price) {
-          const discountPercent = Math.round(((p.compareAtPrice - p.price) / p.compareAtPrice) * 100);
-          discountBadge = `${discountPercent}% OFF`;
-        }
-
-        return {
-          id: p._id.toString(),
-          name: p.title,
-          brand: p.brand,
-          image: p.images?.[0] || '',
-          salePrice: `₹${p.price.toLocaleString('en-IN')}`,
-          originalPrice: p.compareAtPrice ? `₹${p.compareAtPrice.toLocaleString('en-IN')}` : null,
-          discount: discountBadge
-        };
-      });
-    }
-  } catch (error) {
-    console.error("Error fetching top deals:", error);
-  }
-
-  const dealsToDisplay = liveDeals;
+export default function FeaturedDeals({ deals }: FeaturedDealsProps) {
+  const dealsToDisplay = deals || [];
 
   return (
     <section className="w-full py-16 bg-gray-50">
@@ -53,14 +30,15 @@ export default async function FeaturedDeals() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {dealsToDisplay.length > 0 ? (
             dealsToDisplay.map((deal) => (
-            <Link key={deal.id} href={`/product/${deal.slug || deal.id}`} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300 border border-gray-100 flex flex-col group cursor-pointer block">
+            <div key={deal.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300 border border-gray-100 flex flex-col group cursor-pointer block relative">
               <div className="relative w-full aspect-square bg-[#f8f9fa] overflow-hidden">
+                <WishlistButton productId={deal.id || deal._id} />
                 <span className="absolute top-4 left-4 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-sm uppercase tracking-wider shadow-sm z-10">
                   {deal.discount} OFF
                 </span>
                 <div className="w-full h-full flex items-center justify-center text-zinc-400 group-hover:scale-105 transition-transform duration-500 relative">
                   {deal.image ? (
-                    <Image src={deal.image.startsWith('http') || deal.image.startsWith('/') ? deal.image : `/images/${deal.image}`} alt={deal.name} fill sizes="300px" className="object-contain p-4 mix-blend-multiply" />
+                    <img src={resolveImg(deal.image || '')} alt={deal.name} className="absolute inset-0 w-full h-full object-contain p-4 mix-blend-multiply" />
                   ) : (
                     <span>Product Image Placeholder</span>
                   )}
@@ -86,7 +64,7 @@ export default async function FeaturedDeals() {
                   </button>
                 </div>
               </div>
-            </Link>
+            </div>
           ))
           ) : (
             <div className="col-span-3 text-center py-10 text-gray-500">

@@ -11,6 +11,57 @@ const WysiwygEditor = dynamic(() => import('./WysiwygEditor'), {
   loading: () => <div className="h-[150px] bg-gray-100 rounded-xl animate-pulse flex items-center justify-center text-gray-400">Loading editor...</div>
 });
 
+
+const CATEGORIES = ['clubs', 'apparel', 'shoes', 'accessories', 'bags', 'balls'];
+
+function SmartLinkBuilder({ url, setUrl }: { url: string, setUrl: (url: string) => void }) {
+  const isCategory = url.startsWith('/category/');
+  const initialType = isCategory ? 'category' : (url ? 'custom' : 'category');
+  
+  const [linkType, setLinkType] = useState<'category' | 'custom'>(initialType);
+  const [selectedCategory, setSelectedCategory] = useState(isCategory ? url.replace('/category/', '') : CATEGORIES[0]);
+  const [customUrl, setCustomUrl] = useState(!isCategory ? url : '');
+
+  React.useEffect(() => {
+    if (linkType === 'category') {
+      setUrl(`/category/${selectedCategory}`);
+    } else {
+      setUrl(customUrl);
+    }
+  }, [linkType, selectedCategory, customUrl, setUrl]);
+
+  return (
+    <div className="flex gap-2">
+      <select 
+        value={linkType}
+        onChange={(e) => setLinkType(e.target.value as any)}
+        className="w-1/3 px-2 py-2 rounded-lg border border-gray-200 focus:border-black outline-none text-xs bg-white"
+      >
+        <option value="category">Category</option>
+        <option value="custom">Custom</option>
+      </select>
+      
+      {linkType === 'category' ? (
+        <select 
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          className="flex-1 px-2 py-2 rounded-lg border border-gray-200 focus:border-black outline-none text-xs bg-white capitalize"
+        >
+          {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+      ) : (
+        <input 
+          type="text" 
+          value={customUrl} 
+          onChange={(e) => setCustomUrl(e.target.value)} 
+          className="flex-1 px-2 py-2 rounded-lg border border-gray-200 focus:border-black outline-none text-xs" 
+          placeholder="/path..." 
+        />
+      )}
+    </div>
+  );
+}
+
 export default function BannerForm({ initialData }: { initialData?: any }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -20,8 +71,11 @@ export default function BannerForm({ initialData }: { initialData?: any }) {
   const [activeTab, setActiveTab] = useState<'content' | 'buttons' | 'design'>('content');
   
   // State for live preview
+  const [eyebrow, setEyebrow] = useState(initialData?.eyebrow || '');
   const [title, setTitle] = useState(initialData?.title || '');
   const [subtitle, setSubtitle] = useState(initialData?.subtitle || '');
+  
+  const [eyebrowColor, setEyebrowColor] = useState(initialData?.eyebrowColor || '#ffffff');
   const [titleColor, setTitleColor] = useState(initialData?.titleColor || '#ffffff');
   const [subtitleColor, setSubtitleColor] = useState(initialData?.subtitleColor || '#e4e4e7');
   const [overlayOpacity, setOverlayOpacity] = useState(initialData?.overlayOpacity ?? 40);
@@ -40,12 +94,21 @@ export default function BannerForm({ initialData }: { initialData?: any }) {
   
   // Button Size
   const [buttonSize, setButtonSize] = useState<'sm' | 'md' | 'lg' | 'xl'>(initialData?.buttonSize || 'md');
+  const getInitialPosition = (pos: {x: number, y: number} | undefined, defaultX: number, defaultY: number) => {
+    if (!pos) return { x: defaultX, y: defaultY };
+    if (pos.x === 10 && (pos.y === 20 || pos.y === 40 || pos.y === 60)) {
+      return { x: defaultX, y: defaultY };
+    }
+    return pos;
+  };
+
   
   // Positions
-  const [titlePosition, setTitlePosition] = useState(initialData?.titlePosition || { x: 10, y: 20 });
-  const [subtitlePosition, setSubtitlePosition] = useState(initialData?.subtitlePosition || { x: 10, y: 40 });
-  const [buttonPosition, setButtonPosition] = useState(initialData?.buttonPosition || { x: 10, y: 60 });
-  
+  const [eyebrowPosition, setEyebrowPosition] = useState(getInitialPosition(initialData?.eyebrowPosition, 192, 10));
+  const [titlePosition, setTitlePosition] = useState(getInitialPosition(initialData?.titlePosition, 192, 40));
+  const [subtitlePosition, setSubtitlePosition] = useState(getInitialPosition(initialData?.subtitlePosition, 192, 140));
+  const [buttonPosition, setButtonPosition] = useState(getInitialPosition(initialData?.buttonPosition, 192, 240));
+
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(initialData?.imageUrl || null);
   
@@ -69,7 +132,7 @@ export default function BannerForm({ initialData }: { initialData?: any }) {
     });
 
     const observer = new ResizeObserver((entries) => {
-      for (let entry of entries) {
+      for (const entry of entries) {
         setContainerSize({
           width: entry.contentRect.width,
           height: entry.contentRect.height
@@ -78,7 +141,7 @@ export default function BannerForm({ initialData }: { initialData?: any }) {
     });
     observer.observe(containerRef.current);
     return () => observer.disconnect();
-  }, []);
+  }, [isMounted]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -135,8 +198,10 @@ export default function BannerForm({ initialData }: { initialData?: any }) {
       if (!imageUrl) throw new Error('Desktop banner image is required');
 
       const bannerData = {
+        eyebrow: eyebrow,
         title: title,
         subtitle: subtitle,
+        eyebrowColor: eyebrowColor,
         titleColor: titleColor,
         subtitleColor: subtitleColor,
         overlayOpacity: Number(overlayOpacity),
@@ -149,6 +214,7 @@ export default function BannerForm({ initialData }: { initialData?: any }) {
         button2Color: button2Color,
         button2TextColor: button2TextColor,
         buttonSize: buttonSize,
+        eyebrowPosition: eyebrowPosition,
         titlePosition: titlePosition,
         subtitlePosition: subtitlePosition,
         buttonPosition: buttonPosition,
@@ -225,6 +291,11 @@ export default function BannerForm({ initialData }: { initialData?: any }) {
               
               <div className="space-y-8">
                 <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Eyebrow (Small Top Text)</label>
+                  <WysiwygEditor value={eyebrow} onChange={setEyebrow} placeholder="Enter eyebrow text..." />
+                </div>
+
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Banner Title</label>
                   <WysiwygEditor value={title} onChange={setTitle} placeholder="Enter banner title..." />
                 </div>
@@ -264,8 +335,8 @@ export default function BannerForm({ initialData }: { initialData?: any }) {
                       <input type="text" value={buttonText} onChange={(e) => setButtonText(e.target.value)} className="w-full px-3 py-2 rounded-lg border focus:border-black outline-none text-sm" placeholder="Shop Now" />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Link URL</label>
-                      <input type="text" name="linkUrl" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} className="w-full px-3 py-2 rounded-lg border focus:border-black outline-none text-sm" placeholder="/clubs" />
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Link Destination</label>
+                      <SmartLinkBuilder url={linkUrl} setUrl={setLinkUrl} />
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">Bg Color</label>
@@ -286,8 +357,8 @@ export default function BannerForm({ initialData }: { initialData?: any }) {
                       <input type="text" value={button2Text} onChange={(e) => setButton2Text(e.target.value)} className="w-full px-3 py-2 rounded-lg border focus:border-black outline-none text-sm" placeholder="Learn More" />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Link URL</label>
-                      <input type="text" value={button2Url} onChange={(e) => setButton2Url(e.target.value)} className="w-full px-3 py-2 rounded-lg border focus:border-black outline-none text-sm" placeholder="/about" />
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Link Destination</label>
+                      <SmartLinkBuilder url={button2Url} setUrl={setButton2Url} />
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">Bg Color</label>
@@ -363,7 +434,14 @@ export default function BannerForm({ initialData }: { initialData?: any }) {
             </h3>
           </div>
           
-          <div className="w-full aspect-[16/5] relative overflow-hidden bg-gray-100" ref={containerRef}>
+          <div className="w-full relative overflow-hidden bg-gray-100" style={{ paddingBottom: "31.25%" }} ref={containerRef}>
+            {/* DEBUG OVERLAY */}
+            <div style={{ position: 'absolute', top: 0, right: 0, background: 'black', color: 'white', zIndex: 9999, padding: '10px', fontSize: '12px', pointerEvents: 'none' }}>
+              <div>Title: {titlePosition?.x ?? 'null'}, {titlePosition?.y ?? 'null'} | HasText: {title ? `YES (${title.length})` : 'NO'}</div>
+              <div>Subtitle: {subtitlePosition?.x ?? 'null'}, {subtitlePosition?.y ?? 'null'} | HasText: {subtitle ? `YES (${subtitle.length})` : 'NO'}</div>
+              <div>Button: {buttonPosition?.x ?? 'null'}, {buttonPosition?.y ?? 'null'} | HasText: {buttonText ? `YES (${buttonText.length})` : 'NO'}</div>
+            </div>
+
             {imagePreview ? (
               <div 
                 className="absolute inset-0 bg-cover bg-center"
@@ -378,29 +456,51 @@ export default function BannerForm({ initialData }: { initialData?: any }) {
             
             <div className="absolute inset-0" style={{ backgroundColor: `rgba(0,0,0,${overlayOpacity / 100})` }}></div>
             
-            {/* VIRTUAL 1920x600 CANVAS SCALED TO FIT */}
+                                    {/* VIRTUAL 1280x400 CANVAS SCALED TO FIT */}
             <div 
-              className="absolute origin-top-left z-20"
+              className="absolute origin-top-left z-20 text-[48px]"
               style={{ 
-                width: '1920px', 
-                height: '600px', 
-                transform: containerSize.width ? `scale(${containerSize.width / 1920})` : 'scale(1)',
+                width: '1280px', 
+                height: '400px', 
+                transform: containerSize.width ? `scale(${containerSize.width / 1280})` : 'scale(1)',
               }}
             >
-              {title && (
+
+              {eyebrow && (
                 <Rnd
                   bounds="parent"
-                  position={{ x: titlePosition?.x ?? 192, y: titlePosition?.y ?? 120 }}
+                  position={{ x: (eyebrowPosition?.x == null || isNaN(eyebrowPosition.x)) ? 192 : eyebrowPosition.x, y: (eyebrowPosition?.y == null || isNaN(eyebrowPosition.y)) ? 10 : eyebrowPosition.y }}
                   size={{ width: 'auto', height: 'auto' }}
-                  onDragStop={(e, d) => setTitlePosition({ x: d.x, y: d.y })}
+                  onDragStop={(e, d) => setEyebrowPosition({ x: d.x, y: d.y })}
+                  scale={containerSize.width ? containerSize.width / 1280 : 1}
                   enableResizing={false}
                   className="hover:ring-2 hover:ring-blue-500 cursor-move"
                   style={{ zIndex: 10 }}
                 >
                   <div className="wysiwyg-content p-2">
                     <div 
-                      className="w-full leading-none font-bold [&_p]:m-0 drop-shadow-md [&_span]:!leading-none"
-                      style={{ color: titleColor, padding: 0, overflow: 'visible' }}
+                      className="w-full font-medium [&_p]:m-0 drop-shadow leading-tight [&_span]:!leading-tight uppercase tracking-wider text-lg"
+                      style={{ color: eyebrowColor || '#ffffff', padding: 0, overflow: 'visible' }}
+                      dangerouslySetInnerHTML={{ __html: eyebrow }}
+                    />
+                  </div>
+                </Rnd>
+              )}
+              {title && (
+                <Rnd
+                  bounds="parent"
+                  position={{ x: (titlePosition?.x == null || isNaN(titlePosition.x)) ? 192 : titlePosition.x, y: (titlePosition?.y == null || isNaN(titlePosition.y)) ? 40 : titlePosition.y }}
+                  size={{ width: 'auto', height: 'auto' }}
+                  onDragStop={(e, d) => setTitlePosition({ x: d.x, y: d.y })}
+                  scale={containerSize.width ? containerSize.width / 1280 : 1}
+                  enableResizing={false}
+                  className="hover:ring-2 hover:ring-blue-500 cursor-move"
+                  style={{ zIndex: 10 }}
+                >
+                  <div className="wysiwyg-content p-2">
+                    <div 
+                      className="w-full font-bold [&_p]:m-0 drop-shadow-md leading-none [&_span]:!leading-none"
+                      style={{ color: titleColor || '#ffffff', padding: 0, overflow: 'visible' }}
                       dangerouslySetInnerHTML={{ __html: title }}
                     />
                   </div>
@@ -410,17 +510,18 @@ export default function BannerForm({ initialData }: { initialData?: any }) {
               {subtitle && (
                 <Rnd
                   bounds="parent"
-                  position={{ x: subtitlePosition?.x ?? 192, y: subtitlePosition?.y ?? 240 }}
+                  position={{ x: (subtitlePosition?.x == null || isNaN(subtitlePosition.x)) ? 192 : subtitlePosition.x, y: (subtitlePosition?.y == null || isNaN(subtitlePosition.y)) ? 140 : subtitlePosition.y }}
                   size={{ width: 'auto', height: 'auto' }}
                   onDragStop={(e, d) => setSubtitlePosition({ x: d.x, y: d.y })}
+                  scale={containerSize.width ? containerSize.width / 1280 : 1}
                   enableResizing={false}
                   className="hover:ring-2 hover:ring-blue-500 cursor-move"
-                  style={{ zIndex: 10 }}
+                  style={{ zIndex: 20 }}
                 >
                   <div className="wysiwyg-content p-2">
                     <div 
-                      className="w-full leading-tight font-medium [&_p]:m-0 drop-shadow [&_span]:!leading-tight"
-                      style={{ color: subtitleColor, padding: 0, overflow: 'visible' }}
+                      className="w-full font-medium [&_p]:m-0 drop-shadow leading-tight [&_span]:!leading-tight"
+                      style={{ color: subtitleColor || '#e4e4e7', padding: 0, overflow: 'visible' }}
                       dangerouslySetInnerHTML={{ __html: subtitle }}
                     />
                   </div>
@@ -430,12 +531,13 @@ export default function BannerForm({ initialData }: { initialData?: any }) {
               {(buttonText || button2Text) && (
                 <Rnd
                   bounds="parent"
-                  position={{ x: buttonPosition?.x ?? 192, y: buttonPosition?.y ?? 360 }}
+                  position={{ x: (buttonPosition?.x == null || isNaN(buttonPosition.x)) ? 192 : buttonPosition.x, y: (buttonPosition?.y == null || isNaN(buttonPosition.y)) ? 240 : buttonPosition.y }}
                   size={{ width: 'auto', height: 'auto' }}
                   onDragStop={(e, d) => setButtonPosition({ x: d.x, y: d.y })}
+                  scale={containerSize.width ? containerSize.width / 1280 : 1}
                   enableResizing={false}
                   className="hover:ring-2 hover:ring-blue-500 cursor-move"
-                  style={{ zIndex: 50 }}
+                  style={{ zIndex: 30 }}
                 >
                   <div className="flex gap-4 p-2">
                     {buttonText && (
@@ -447,7 +549,7 @@ export default function BannerForm({ initialData }: { initialData?: any }) {
                           buttonSize === 'xl' ? 'py-6 px-12 text-2xl' :
                           'py-4 px-8 text-lg'
                         }`}
-                        style={{ backgroundColor: buttonColor, color: buttonTextColor }}
+                        style={{ backgroundColor: buttonColor || '#16a34a', color: buttonTextColor || '#ffffff' }}
                       >
                         {buttonText}
                       </button>
@@ -461,7 +563,7 @@ export default function BannerForm({ initialData }: { initialData?: any }) {
                           buttonSize === 'xl' ? 'py-6 px-12 text-2xl' :
                           'py-4 px-8 text-lg'
                         }`}
-                        style={{ backgroundColor: button2Color, color: button2TextColor }}
+                        style={{ backgroundColor: button2Color || '#ffffff', color: button2TextColor || '#000000' }}
                       >
                         {button2Text}
                       </button>

@@ -5,13 +5,20 @@ import dbConnect from '@/lib/mongodb';
 import PageSettings from '@/models/PageSettings';
 
 export default async function ShoesSidebarFilter() {
-  const data = await getMegaMenuData();
-  const categoryData = data['Shoes'] || { brands: [], attributes: {} };
-  
-  await dbConnect();
-  const settings = await PageSettings.findOne({ page: 'shoes' }).lean();
+  let categoryData: any = { brands: [], attributes: {} };
+  let allowedAttributes: any[] = [];
 
-  let allowedAttributes = settings?.allowedFilters || [];
-  
+  try {
+    const data = await getMegaMenuData();
+    categoryData = data['Shoes'] || { brands: [], attributes: {} };
+    await dbConnect();
+    const settings = await PageSettings.findOne({ page: 'shoes' }).lean();
+    if (settings) {
+      allowedAttributes = settings.allowedFilters || [];
+    }
+  } catch (e) {
+    console.error("ShoesSidebarFilter DB error, using fallback:", e);
+  }
+
   return <DynamicSidebarFilter filterData={categoryData} allowedAttributes={allowedAttributes} />;
 }

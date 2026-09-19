@@ -1,11 +1,6 @@
 import { NextResponse } from 'next/server';
-import { v2 as cloudinary } from 'cloudinary';
-
-cloudinary.config({
-  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+import fs from 'fs/promises';
+import path from 'path';
 
 export async function POST(req: Request) {
   try {
@@ -19,19 +14,21 @@ export async function POST(req: Request) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    const uploadResult = await new Promise((resolve, reject) => {
-      cloudinary.uploader.upload_stream(
-        { folder: 'golf-ecom' },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }
-      ).end(buffer);
-    });
+    // Save file to public/uploads directory
+    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+    await fs.mkdir(uploadsDir, { recursive: true });
 
-    return NextResponse.json({ url: (uploadResult as any).secure_url });
+    const ext = path.extname(file.name) || '.png';
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}${ext}`;
+    const filePath = path.join(uploadsDir, fileName);
+
+    await fs.writeFile(filePath, buffer);
+
+    const publicUrl = `/uploads/${fileName}`;
+    return NextResponse.json({ url: publicUrl });
   } catch (error) {
-    console.error('Error uploading to Cloudinary:', error);
+    console.error('Error uploading file:', error);
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
   }
 }
+

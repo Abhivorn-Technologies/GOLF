@@ -4,25 +4,28 @@ import User from '@/models/User';
 import bcrypt from 'bcrypt';
 import { createAdminSession } from '@/lib/adminAuth';
 
+function setSessionCookie(res: NextResponse, token: string) {
+  res.cookies.set('admin_token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+  });
+  return res;
+}
+
 export async function POST(req: Request) {
-  let email = '';
   try {
     const body = await req.json();
-    email = body.email;
-    const password = body.password;
+    const email = (body.email || '').trim().toLowerCase();
+    const password = (body.password || '').trim();
 
     if (!email || !password) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
-    // Mock logic for local development if MongoDB is blocked
-    if (process.env.NODE_ENV === 'development' && email === 'admin@golfpro.com' && password === 'admin123') {
-      await createAdminSession('mock-admin-1', email);
-      return NextResponse.json({ success: true, message: 'Logged in successfully (Mock)' });
-    }
-
     await dbConnect();
-    
+
     const user = await User.findOne({ email });
     if (!user) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
@@ -37,18 +40,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
-    await createAdminSession(user._id.toString(), user.email);
+    const token = await createAdminSession(user._id.toString(), user.email);
+    const res = NextResponse.json({ success: true, message: 'Logged in successfully' });
+    return setSessionCookie(res, token);
 
-    return NextResponse.json({ success: true, message: 'Logged in successfully' });
   } catch (error) {
     console.error('Admin login error:', error);
-    
-    // Seamless mock fallback for dev
-    if (process.env.NODE_ENV === 'development' && email === 'admin@golfpro.com') {
-      await createAdminSession('mock-admin-1', email);
-      return NextResponse.json({ success: true, message: 'Logged in successfully (Mock Fallback)' });
-    }
-
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

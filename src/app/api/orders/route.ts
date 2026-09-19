@@ -19,8 +19,7 @@ export async function POST(req: NextRequest) {
       razorpay_order_id,
       razorpay_payment_id,
       razorpay_signature,
-      couponCode,
-      discountAmount
+      couponCode
     } = body;
 
     if (!cartItems || cartItems.length === 0) {
@@ -65,11 +64,29 @@ export async function POST(req: NextRequest) {
         product = await Product.findById(item.product.id);
       }
 
-      if (product && product.stockCount < item.quantity) {
-        return NextResponse.json(
-          { error: `"${product.title}" only has ${product.stockCount} units in stock.` },
-          { status: 409 }
-        );
+      if (!product) {
+        return NextResponse.json({ error: `Product not found for item ${item.product.title}` }, { status: 404 });
+      }
+
+      // Check specific variant stock if applicable
+      const variantId = item.variants?.variantId;
+      if (variantId) {
+        const variant = product.variants?.find((v: any) => v.id === variantId);
+        if (variant) {
+          if (variant.stockCount < item.quantity) {
+            return NextResponse.json(
+              { error: `The variant "${variant.color} - ${variant.size}" for "${product.title}" only has ${variant.stockCount} units in stock.` },
+              { status: 409 }
+            );
+          }
+        }
+      } else {
+        if (product.stockCount < item.quantity) {
+          return NextResponse.json(
+            { error: `"${product.title}" only has ${product.stockCount} units in stock.` },
+            { status: 409 }
+          );
+        }
       }
 
       const priceAtPurchase = product ? parsePrice(product.price) : parsePrice(item.product.price);
@@ -83,17 +100,41 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const shippingCost = subtotal > 0 ? (subtotal > 10000 ? 0 : 500) : 0;
-    const taxAmount = subtotal * 0.18;
-    const finalDiscount = discountAmount || 0;
-    const totalAmount = subtotal + shippingCost + taxAmount - finalDiscount;
+    let finalDiscount = 0;
+    if (couponCode) {
+      const coupon = await Coupon.findOne({ code: couponCode.toUpperCase().trim(), isActive: true });
+      if (coupon) {
+        let isValid = true;
+        if (coupon.expiresAt && new Date() > coupon.expiresAt) isValid = false;
+        if (coupon.maxUses !== null && coupon.usedCount >= coupon.maxUses) isValid = false;
+        if (subtotal < coupon.minOrderAmount) isValid = false;
 
-    // Mock 3PL integration
-    const mockTrackingId = 'AWB' + Math.floor(100000000 + Math.random() * 900000000).toString();
-    const mockCouriers = ['Delhivery', 'Bluedart', 'Ecom Express', 'Xpressbees'];
-    const assignedCourier = mockCouriers[Math.floor(Math.random() * mockCouriers.length)];
-    const estimatedDeliveryDate = new Date();
-    estimatedDeliveryDate.setDate(estimatedDeliveryDate.getDate() + 3 + Math.floor(Math.random() * 4));
+        if (isValid) {
+          finalDiscount = coupon.discountType === 'percentage'
+            ? Math.min((subtotal * coupon.discountValue) / 100, subtotal)
+            : Math.min(coupon.discountValue, subtotal);
+        }
+      }
+    }
+
+    const shippingCost = 0;
+    const taxAmount = 0;
+    const totalAmount = Math.max(0, subtotal - finalDiscount);
+
+    function addBusinessDays(date: Date, days: number) {
+      const result = new Date(date);
+      let added = 0;
+      while (added < days) {
+        result.setDate(result.getDate() + 1);
+        const day = result.getDay();
+        if (day !== 0 && day !== 6) {
+          added++;
+        }
+      }
+      return result;
+    }
+
+    const estimatedDeliveryDate = addBusinessDays(new Date(), 7);
 
     // Create the order
     const order = await Order.create({
@@ -123,17 +164,39 @@ export async function POST(req: NextRequest) {
         zip: shippingAddress.zip || '000000',
         country: shippingAddress.country || 'India'
       },
-      trackingId: mockTrackingId,
-      courierName: assignedCourier,
+      trackingId: null,
+      courierName: null,
       estimatedDelivery: estimatedDeliveryDate
     });
 
-    // Decrement stock after order confirmed
+    // Decrement stock and update inStock status after order confirmed
     for (const item of orderProducts) {
       if (item.product) {
-        await Product.findByIdAndUpdate(item.product, {
-          $inc: { stockCount: -item.quantity }
-        });
+        const productData = await Product.findById(item.product);
+        if (productData) {
+          const variantId = item.variants?.variantId;
+          
+          if (variantId) {
+            // Update variant stock specifically
+            const variantIndex = productData.variants?.findIndex((v: any) => v.id === variantId);
+            if (variantIndex !== undefined && variantIndex >= 0) {
+              const newStockCount = productData.variants[variantIndex].stockCount - item.quantity;
+              
+              // Use $set to target the specific array element
+              await Product.updateOne(
+                { _id: item.product, "variants.id": variantId },
+                { $set: { [`variants.$.stockCount`]: newStockCount } }
+              );
+            }
+          } else {
+            // Global stock fallback
+            const newStockCount = productData.stockCount - item.quantity;
+            await Product.findByIdAndUpdate(item.product, {
+              stockCount: newStockCount,
+              inStock: newStockCount > 0
+            });
+          }
+        }
       }
     }
 

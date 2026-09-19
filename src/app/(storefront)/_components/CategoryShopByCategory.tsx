@@ -13,6 +13,17 @@ interface Category {
   image?: string;
 }
 
+function resolveImgSrc(src?: string) {
+  if (!src || typeof src !== 'string' || src.trim() === '' || src === '/placeholder.png' || src === 'placeholder.png' || src === 'null' || src === 'undefined') {
+    return '/images/golf.png';
+  }
+  const clean = src.trim();
+  if (clean.startsWith('data:') || clean.startsWith('http://') || clean.startsWith('https://') || clean.startsWith('/')) {
+    return clean;
+  }
+  return `/images/${clean}`;
+}
+
 export default function CategoryShopByCategory({ categories = [] }: { categories?: Category[] }) {
   const displayCategories = categories.length > 0 ? categories : [
     { 
@@ -63,8 +74,8 @@ export default function CategoryShopByCategory({ categories = [] }: { categories
           const targetHref = (cat.href && cat.href.trim() !== '') ? cat.href : `?type=${encodeURIComponent(filterVal)}`;
 
           // Format description for natural breaking if it doesn't already have newlines
-          let formattedDesc = cat.desc;
-          if (!formattedDesc.includes('\n')) {
+          let formattedDesc = cat.desc || '';
+          if (formattedDesc && !formattedDesc.includes('\n')) {
              // Basic heuristic to break at uppercase letters if missing newlines
              formattedDesc = formattedDesc.replace(/([a-z])([A-Z])/g, '$1\n$2');
           }
@@ -96,7 +107,12 @@ export default function CategoryShopByCategory({ categories = [] }: { categories
             {/* Right Image */}
             <div className="absolute right-0 bottom-4 w-[55%] h-[75%] flex items-end justify-end pointer-events-none z-0">
               {cat.image ? (
-                <img src={cat.image} alt={cat.name} className="w-full h-full object-contain object-right-bottom group-hover:scale-110 transition-transform duration-500" />
+                <img 
+                  src={resolveImgSrc(cat.image)} 
+                  alt={cat.name} 
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/images/golf.png'; }}
+                  className="w-full h-full object-contain object-right-bottom group-hover:scale-110 transition-transform duration-500" 
+                />
               ) : (
                 <div className={`w-full h-full bg-gradient-to-br ${cat.color || 'from-gray-100 to-gray-200'} opacity-20 rounded-l-full`}></div>
               )}

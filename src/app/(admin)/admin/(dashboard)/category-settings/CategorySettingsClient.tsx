@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Save, Loader2, Check, Filter } from 'lucide-react';
+import toast from 'react-hot-toast';
 import PromotionalBlocksManager from './_components/PromotionalBlocksManager';
 
 export default function CategorySettingsClient({ filterData }: { filterData: any }) {
@@ -69,7 +70,7 @@ export default function CategorySettingsClient({ filterData }: { filterData: any
       }
     } catch (err) {
       console.error(err);
-      alert('Failed to save settings.');
+      toast.error('Failed to save settings.');
     } finally {
       setSaving(false);
     }

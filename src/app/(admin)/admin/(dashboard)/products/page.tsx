@@ -7,6 +7,12 @@ import Product from '@/models/Product';
 import DeleteProductButton from '@/components/admin/DeleteProductButton';
 import Pagination from '@/components/admin/Pagination';
 
+function resolveImg(src: string) {
+  if (!src) return '/images/golf.png';
+  if (src.startsWith('data:') || src.startsWith('http') || src.startsWith('/')) return src;
+  return `/images/${src}`;
+}
+
 async function getProducts(page: number, limit: number) {
   try {
     await dbConnect();
@@ -15,7 +21,8 @@ async function getProducts(page: number, limit: number) {
       Product.find({}).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
       Product.countDocuments({})
     ]);
-    return { products: products as any[], totalCount };
+    const plainProducts = JSON.parse(JSON.stringify(products));
+    return { products: plainProducts as any[], totalCount };
   } catch (error) {
     console.error("Failed to fetch products", error);
     return { products: [], totalCount: 0 };
@@ -66,6 +73,7 @@ export default async function ProductsPage(props: { searchParams: Promise<{ [key
                 <th className="py-5 px-8">Product</th>
                 <th className="py-5 px-8">Category</th>
                 <th className="py-5 px-8">Brand</th>
+                <th className="py-5 px-8">Stock</th>
                 <th className="py-5 px-8">Price</th>
                 <th className="py-5 px-8 text-right">Actions</th>
               </tr>
@@ -73,26 +81,29 @@ export default async function ProductsPage(props: { searchParams: Promise<{ [key
             <tbody className="text-sm">
               {products.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-16 text-center text-gray-400 font-medium">
+                  <td colSpan={6} className="py-16 text-center text-gray-400 font-medium">
                     No products found. Add your first product to get started.
                   </td>
                 </tr>
               ) : (
-                products.map((product) => (
+                products.map((product) => {
+                  const displayStock = product.variants && product.variants.length > 0 
+                    ? product.variants.reduce((sum: number, v: any) => sum + (Number(v.stockCount) || 0), 0) 
+                    : (product.stockCount || 0);
+                  const isLowStock = displayStock <= 5;
+                  const rawImg = (product.images && product.images[0]) || product.image || '';
+                  const imgSrc = resolveImg(rawImg);
+                  
+                  return (
                   <tr key={product._id.toString()} className="border-b border-gray-50/50 hover:bg-gray-50/30 transition-colors group">
                     <td className="py-4 px-8">
                       <div className="flex items-center gap-5">
                         <div className="w-14 h-14 rounded-xl bg-gray-50 overflow-hidden relative flex-shrink-0 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
-                          {product.images && product.images[0] && (product.images[0].startsWith('http') || product.images[0].startsWith('/')) ? (
-                            <Image 
-                              src={product.images[0]} 
-                              alt={product.title || 'Product Image'}
-                              fill
-                              className="object-cover mix-blend-multiply"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-300 text-[10px] uppercase font-bold tracking-wider">No img</div>
-                          )}
+                          <img 
+                            src={imgSrc} 
+                            alt={product.title || product.name || 'Product Image'}
+                            className="w-full h-full object-contain p-1 mix-blend-multiply"
+                          />
                         </div>
                         <div>
                           <div className="font-bold text-gray-900 group-hover:text-black transition-colors line-clamp-1">{product.title || 'Untitled Product'}</div>
@@ -101,6 +112,16 @@ export default async function ProductsPage(props: { searchParams: Promise<{ [key
                     </td>
                     <td className="py-4 px-8 text-gray-500 capitalize font-medium">{product.category || product.type || '-'}</td>
                     <td className="py-4 px-8 text-gray-500 font-medium">{product.brand}</td>
+                    <td className="py-4 px-8">
+                      <div className="flex items-center gap-2">
+                        <span className={`font-bold ${isLowStock ? 'text-red-600' : 'text-gray-900'}`}>{displayStock}</span>
+                        {isLowStock && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 uppercase tracking-wider">
+                            Low Stock
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="py-4 px-8 font-bold text-gray-900">${product.price.toFixed(2)}</td>
                     <td className="py-4 px-8">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -111,7 +132,7 @@ export default async function ProductsPage(props: { searchParams: Promise<{ [key
                       </div>
                     </td>
                   </tr>
-                ))
+                )})
               )}
             </tbody>
           </table>

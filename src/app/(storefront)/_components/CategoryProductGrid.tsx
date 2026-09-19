@@ -1,10 +1,9 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import ProductCard from "@/components/ProductCard";
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import type { ProductType } from '@/data/products';
-import { useState, useEffect } from 'react';
 
 export default function CategoryProductGrid({ category }: { category: string }) {
   const searchParams = useSearchParams();
@@ -16,28 +15,36 @@ export default function CategoryProductGrid({ category }: { category: string }) 
   const [pagination, setPagination] = useState({ totalPages: 1, currentPage: 1, totalItems: 0 });
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchProducts = async () => {
       setLoading(true);
       const params = new URLSearchParams(searchParams.toString());
       params.set('category', category);
       
       try {
-        const res = await fetch('/api/products/public?' + params.toString(), { cache: 'no-store' });
+        const res = await fetch('/api/products/public?' + params.toString());
+        if (!res.ok) return;
         const json = await res.json();
-        if (json.success) {
-          setProducts(json.data);
+        if (isMounted && json.success) {
+          setProducts(json.data || []);
           if (json.pagination) {
             setPagination(json.pagination);
           }
         }
       } catch (err) {
-        console.error(err);
+        // Silently ignore aborted fetches on page navigation
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
+
     fetchProducts();
-  }, [searchParams]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [searchParams, category]);
 
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > pagination.totalPages) return;
@@ -49,15 +56,16 @@ export default function CategoryProductGrid({ category }: { category: string }) 
   return (
     <div className="flex-1 pb-[120px]">
       
-      {/* Product Grid - 3 Column Layout */}
+      {/* Product Grid */}
       <div className={`grid grid-cols-2 md:grid-cols-3 gap-x-[16px] md:gap-x-[24px] gap-y-[24px] md:gap-y-[32px] mb-[48px] transition-opacity duration-200 ${loading ? 'opacity-50' : 'opacity-100'}`}>
         {products.length > 0 ? (
           products.map((product) => (
-            <ProductCard key={product.id} product={product} />))
+            <ProductCard key={product.id} product={product} />
+          ))
         ) : (
           !loading && (
-            <div className="col-span-1 md:col-span-2 py-16 flex flex-col items-center justify-center text-center">
-              <h3 className="text-2xl font-serif text-gray-800 mb-2">No {category} found</h3>
+            <div className="col-span-1 md:col-span-3 py-16 flex flex-col items-center justify-center text-center">
+              <h3 className="text-2xl font-serif text-gray-800 mb-2 uppercase">No {category} found</h3>
               <p className="text-gray-500">Try adjusting your filters to find what you're looking for.</p>
             </div>
           )

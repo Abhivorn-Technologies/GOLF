@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Order from '@/models/Order';
+import Product from '@/models/Product';
 import { verifyAdminSession } from '@/lib/adminAuth';
 
 export async function GET(req: NextRequest) {
@@ -18,7 +19,7 @@ export async function GET(req: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    let query: any = {};
+    const query: any = {};
     if (status !== 'all') {
       query.shippingStatus = status;
     }

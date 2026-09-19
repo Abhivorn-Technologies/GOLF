@@ -2,11 +2,28 @@ import dbConnect from "@/lib/mongodb";
 import Product from "@/models/Product";
 import { ALL_PRODUCTS } from "@/data/products";
 
+let cachedMegaMenuData: Record<string, any> | null = null;
+let lastCacheTime = 0;
+const CACHE_TTL_MS = 30000; // 30 seconds cache
+
 export async function getMegaMenuData() {
+  const now = Date.now();
+  if (cachedMegaMenuData && (now - lastCacheTime < CACHE_TTL_MS)) {
+    return cachedMegaMenuData;
+  }
+
   let dbProducts: any[] = [];
   try {
-    await dbConnect();
-    dbProducts = await Product.find({}).lean();
+    const fetchPromise = (async () => {
+      await dbConnect();
+      return await Product.find({}, 'category brand gender style type loft size attributes').lean();
+    })();
+
+    const timeoutPromise = new Promise<any[]>((resolve) =>
+      setTimeout(() => resolve([]), 3000)
+    );
+
+    dbProducts = await Promise.race([fetchPromise, timeoutPromise]);
   } catch (error) {
     console.error("Error fetching mega menu data from DB:", error);
   }
@@ -96,6 +113,7 @@ export async function getMegaMenuData() {
     });
   });
 
-  require("fs").writeFileSync("debug.json", JSON.stringify(serializedData)); 
+  cachedMegaMenuData = serializedData;
+  lastCacheTime = now;
   return serializedData;
 }

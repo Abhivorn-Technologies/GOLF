@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 const BannerSchema = new mongoose.Schema({
   title: { type: String },
   subtitle: { type: String },
+  eyebrow: { type: String },
   imageUrl: { type: String, required: true },
   mobileImageUrl: { type: String },
   linkUrl: { type: String },
@@ -15,12 +16,17 @@ const BannerSchema = new mongoose.Schema({
   button2TextColor: { type: String, default: '#000000' },
   titleColor: { type: String, default: '#ffffff' },
   subtitleColor: { type: String, default: '#e4e4e7' },
+  eyebrowColor: { type: String, default: '#ffffff' },
   overlayOpacity: { type: Number, default: 40 },
   alignment: { type: String, enum: ['left', 'center', 'right'], default: 'center' },
   buttonSize: { type: String, enum: ['sm', 'md', 'lg', 'xl'], default: 'md' },
   titlePosition: {
     x: { type: Number, default: 10 },
     y: { type: Number, default: 20 }
+  },
+  eyebrowPosition: {
+    x: { type: Number, default: 10 },
+    y: { type: Number, default: 10 }
   },
   subtitlePosition: {
     x: { type: Number, default: 10 },
@@ -33,9 +39,7 @@ const BannerSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true },
   displayOrder: { type: Number, default: 0 }
 }, { timestamps: true });
-// Clear cache in development to ensure schema updates take effect
-if (process.env.NODE_ENV !== 'production') {
-  delete mongoose.models.Banner;
-}
+
+BannerSchema.index({ isActive: 1, displayOrder: 1 });
 
 export default mongoose.models.Banner || mongoose.model('Banner', BannerSchema);

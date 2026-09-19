@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import dbConnect from "@/lib/mongodb";
 import Order from "@/models/Order";
+import Product from "@/models/Product";
 
 export async function GET(
   req: NextRequest,

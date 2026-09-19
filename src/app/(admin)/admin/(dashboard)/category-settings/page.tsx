@@ -2,6 +2,8 @@ import React from 'react';
 import { getMegaMenuData } from '@/lib/filters';
 import CategorySettingsClient from './CategorySettingsClient';
 
+export const dynamic = 'force-dynamic';
+
 export default async function CategorySettingsPage() {
   // Fetch all unique attributes available in the database across all products
   const filterData = await getMegaMenuData();

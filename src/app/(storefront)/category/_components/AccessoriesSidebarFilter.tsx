@@ -11,7 +11,7 @@ export default async function AccessoriesSidebarFilter() {
   await dbConnect();
   const settings = await PageSettings.findOne({ page: 'accessories' }).lean();
 
-  let allowedAttributes = settings?.allowedFilters || [];
+  const allowedAttributes = settings?.allowedFilters || [];
   
   return <DynamicSidebarFilter filterData={categoryData} allowedAttributes={allowedAttributes} />;
 }

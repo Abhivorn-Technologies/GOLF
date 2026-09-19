@@ -12,13 +12,7 @@ export async function createAdminSession(adminId: string, email: string) {
     .setExpirationTime('30d')
     .sign(SECRET_KEY);
 
-  const cookieStore = await cookies();
-  cookieStore.set('admin_token', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-  });
+  return token;
 }
 
 export async function verifyAdminSession() {
@@ -30,7 +24,7 @@ export async function verifyAdminSession() {
   try {
     const { payload } = await jwtVerify(token, SECRET_KEY);
     return payload as { id: string; email: string; role: string };
-  } catch (error) {
+  } catch {
     return null;
   }
 }

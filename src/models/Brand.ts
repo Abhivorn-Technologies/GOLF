@@ -8,9 +8,6 @@ const BrandSchema = new mongoose.Schema({
   categories: { type: [String], default: [] }
 }, { timestamps: true });
 
-// Clear cache in development to ensure schema updates take effect
-if (process.env.NODE_ENV !== 'production') {
-  delete mongoose.models.Brand;
-}
+BrandSchema.index({ isActive: 1, displayOrder: 1 });
 
 export default mongoose.models.Brand || mongoose.model('Brand', BrandSchema);

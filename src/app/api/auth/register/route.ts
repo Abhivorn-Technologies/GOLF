@@ -3,16 +3,19 @@ import bcrypt from 'bcrypt';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 
+import { validatePassword } from '@/lib/validations';
+
 export async function POST(req: Request) {
   try {
-    const { name, email, password } = await req.json();
+    const { name, email, password, newsletterSubscribed = true } = await req.json();
 
     if (!name || !email || !password) {
       return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
     }
 
-    if (password.length < 6) {
-      return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      return NextResponse.json({ error: passwordValidation.errorMessage }, { status: 400 });
     }
 
     await dbConnect();
@@ -32,6 +35,7 @@ export async function POST(req: Request) {
       email,
       password: hashedPassword,
       role: 'user', // Default to normal user
+      newsletterSubscribed: Boolean(newsletterSubscribed),
     });
 
     return NextResponse.json(

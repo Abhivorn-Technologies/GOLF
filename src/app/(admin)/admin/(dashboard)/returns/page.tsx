@@ -118,22 +118,23 @@ export default function ReturnsPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[900px]">
+          <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>
               <tr className="border-b border-gray-50 text-xs uppercase tracking-wider text-gray-400 bg-white font-semibold">
-                <th className="py-5 px-8">Order ID</th>
-                <th className="py-5 px-8">Customer</th>
-                <th className="py-5 px-8">Type</th>
-                <th className="py-5 px-8">Reason</th>
-                <th className="py-5 px-8">Status</th>
-                <th className="py-5 px-8 text-right">Update Return</th>
-                <th className="py-5 px-8 text-right">Action</th>
+                <th className="py-5 px-6">Order ID</th>
+                <th className="py-5 px-6">Item</th>
+                <th className="py-5 px-6">Customer</th>
+                <th className="py-5 px-6">Type</th>
+                <th className="py-5 px-6">Reason</th>
+                <th className="py-5 px-6">Status</th>
+                <th className="py-5 px-6 text-right">Update Return</th>
+                <th className="py-5 px-6 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="text-sm">
               {returns.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-16 text-center text-gray-400 font-medium">
+                  <td colSpan={8} className="py-16 text-center text-gray-400 font-medium">
                     No returns or cancellations found.
                   </td>
                 </tr>
@@ -143,9 +144,26 @@ export default function ReturnsPage() {
                   const displayStatus = isCancelled ? 'cancelled' : (order.returnStatus || 'requested');
                   const reason = isCancelled ? order.cancellationReason : order.returnReason;
                   
+                  const firstItem = order.products && order.products[0];
+                  const prodObj = firstItem?.product && typeof firstItem.product === 'object' ? firstItem.product : null;
+                  const prodName = prodObj?.name || prodObj?.title || firstItem?.name || firstItem?.title || 'Returned Item';
+                  const rawImg = prodObj?.image || (Array.isArray(prodObj?.images) ? prodObj.images[0] : null) || firstItem?.image || (Array.isArray(firstItem?.images) ? firstItem.images[0] : null) || '';
+                  
+                  let prodImg = '/images/golf.png';
+                  if (rawImg && typeof rawImg === 'string' && rawImg.trim() !== '' && rawImg !== '/placeholder.png' && rawImg !== 'placeholder.png') {
+                    const clean = rawImg.trim();
+                    if (clean.startsWith('http://') || clean.startsWith('https://') || clean.startsWith('data:') || clean.startsWith('/')) {
+                      prodImg = clean;
+                    } else {
+                      prodImg = `/images/${clean}`;
+                    }
+                  }
+
+                  const extraItemsCount = (order.products?.length || 1) - 1;
+
                   return (
                     <tr key={order._id} className="border-b border-gray-50/50 hover:bg-gray-50/30 transition-colors group">
-                      <td className="py-4 px-8 font-bold text-gray-900">
+                      <td className="py-4 px-6 font-bold text-gray-900">
                         <Link href={`/admin/orders/${order._id}`} className="hover:underline hover:text-black transition-colors text-gray-500">
                           #{order._id.slice(-6).toUpperCase()}
                         </Link>
@@ -153,29 +171,57 @@ export default function ReturnsPage() {
                           {new Date(order.updatedAt).toLocaleDateString()}
                         </div>
                       </td>
-                      <td className="py-4 px-8">
-                        <div className="font-bold text-gray-900">{order.shippingAddress?.name || 'Guest'}</div>
-                        <div className="text-gray-400 text-xs mt-1">{order.customerEmail}</div>
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center shrink-0 p-1">
+                            <img 
+                              src={prodImg} 
+                              alt={prodName}
+                              className="w-full h-full object-contain mix-blend-multiply"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                if (!target.dataset.fallback) {
+                                  target.dataset.fallback = 'true';
+                                  target.src = '/images/golf.png';
+                                }
+                              }}
+                            />
+                          </div>
+                          <div className="flex flex-col max-w-[160px]">
+                            <span className="font-bold text-gray-900 text-xs truncate" title={prodName}>
+                              {prodName}
+                            </span>
+                            {extraItemsCount > 0 && (
+                              <span className="text-[10px] text-gray-400 font-medium">
+                                +{extraItemsCount} more item{extraItemsCount > 1 ? 's' : ''}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </td>
-                      <td className="py-4 px-8">
-                        <span className={`inline-flex items-center px-2 py-1 rounded text-[10px] uppercase tracking-wider font-bold ${isCancelled ? 'bg-orange-100 text-orange-700' : 'bg-purple-100 text-purple-700'}`}>
+                      <td className="py-4 px-6">
+                        <div className="font-bold text-gray-900 text-xs">{order.shippingAddress?.name || 'Guest'}</div>
+                        <div className="text-gray-400 text-[11px] mt-0.5">{order.customerEmail}</div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] uppercase tracking-wider font-bold ${isCancelled ? 'bg-orange-100 text-orange-700' : 'bg-purple-100 text-purple-700'}`}>
                           {isCancelled ? 'Cancellation' : 'Return'}
                         </span>
                       </td>
-                      <td className="py-4 px-8 text-gray-600 max-w-[200px] truncate" title={reason || 'No reason provided'}>
+                      <td className="py-4 px-6 text-gray-600 max-w-[180px] truncate text-xs" title={reason || 'No reason provided'}>
                         {reason || <span className="text-gray-400 italic">No reason provided</span>}
                       </td>
-                      <td className="py-4 px-8">
-                        <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-[10px] uppercase tracking-widest font-bold border ${getStatusColor(displayStatus)}`}>
+                      <td className="py-4 px-6">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] uppercase tracking-widest font-bold border ${getStatusColor(displayStatus)}`}>
                           {displayStatus.toUpperCase()}
                         </span>
                       </td>
-                      <td className="py-4 px-8 text-right">
+                      <td className="py-4 px-6 text-right">
                         {!isCancelled ? (
                           <select 
                             value={order.returnStatus || 'requested'} 
                             onChange={(e) => updateStatus(order._id, e.target.value, order.shippingStatus)}
-                            className="text-xs border border-gray-200 bg-gray-50 rounded-xl px-3 py-2 outline-none focus:border-black font-medium text-gray-700"
+                            className="text-xs border border-gray-200 bg-gray-50 rounded-xl px-2.5 py-1.5 outline-none focus:border-black font-medium text-gray-700"
                           >
                             <option value="requested">Requested</option>
                             <option value="approved">Approved</option>
@@ -186,7 +232,7 @@ export default function ReturnsPage() {
                           <span className="text-xs text-gray-400 font-medium">Cancelled Order</span>
                         )}
                       </td>
-                      <td className="py-4 px-8 text-right">
+                      <td className="py-4 px-6 text-right">
                         <Link 
                           href={`/admin/orders/${order._id}`}
                           className="inline-flex items-center justify-center p-2 rounded-xl bg-gray-50 text-gray-400 hover:bg-black hover:text-white transition-all"

@@ -68,6 +68,7 @@ export default async function CustomersPage(props: { searchParams: Promise<{ [ke
               <tr className="border-b border-gray-100 text-sm text-gray-500 bg-white">
                 <th className="py-4 px-6 font-medium">Customer</th>
                 <th className="py-4 px-6 font-medium">Contact</th>
+                <th className="py-4 px-6 font-medium">Newsletter</th>
                 <th className="py-4 px-6 font-medium">Joined Date</th>
                 <th className="py-4 px-6 font-medium">Orders</th>
                 <th className="py-4 px-6 font-medium">Total Spent</th>
@@ -76,7 +77,7 @@ export default async function CustomersPage(props: { searchParams: Promise<{ [ke
             <tbody className="text-sm">
               {customers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-gray-500">
+                  <td colSpan={6} className="py-12 text-center text-gray-500">
                     No customers found.
                   </td>
                 </tr>
@@ -103,6 +104,17 @@ export default async function CustomersPage(props: { searchParams: Promise<{ [ke
                         </div>
                       )}
                     </td>
+                    <td className="py-4 px-6">
+                      {customer.newsletterSubscribed ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Subscribed
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                          Not Subscribed
+                        </span>
+                      )}
+                    </td>
                     <td className="py-4 px-6 text-gray-600">
                       {new Date(customer.createdAt).toLocaleDateString()}
                     </td>
@@ -113,7 +125,7 @@ export default async function CustomersPage(props: { searchParams: Promise<{ [ke
                       </div>
                     </td>
                     <td className="py-4 px-6 font-bold text-gray-900">
-                      ${customer.totalSpent.toFixed(2)}
+                      ₹{customer.totalSpent.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
                   </tr>
                 ))

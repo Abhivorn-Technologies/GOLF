@@ -3,21 +3,43 @@ import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import dbConnect from '@/lib/mongodb';
 import Brand from '@/models/Brand';
-import Image from 'next/image';
 
-export default async function BrandsWeLove({ category }: { category?: string }) {
+function resolveImg(src: string) {
+  if (!src) return '/images/golf.png';
+  if (src.startsWith('data:') || src.startsWith('http') || src.startsWith('/')) return src;
+  return `/images/${src}`;
+}
+
+interface BrandsWeLoveProps {
+  category?: string;
+  brands?: any[];
+}
+
+export default async function BrandsWeLove({ category, brands: prefetchedBrands }: BrandsWeLoveProps) {
   let brands: any[] = [];
   
-  try {
-    await dbConnect();
-    // Fetch active brands sorted by display order
-    const query: any = { isActive: true };
-    if (category) {
-      query.categories = category;
+  if (prefetchedBrands && prefetchedBrands.length > 0) {
+    // Use pre-fetched data (from homepage parallel fetch)
+    brands = prefetchedBrands;
+  } else {
+    // Self-fetch (used on category pages)
+    try {
+      await dbConnect();
+      const query: any = { isActive: true };
+      if (category) {
+        query.categories = category;
+      }
+      const rawBrands = await Brand.find(query).sort({ displayOrder: 1, createdAt: -1 }).lean();
+      brands = rawBrands.map((b: any) => ({
+        _id: b._id.toString(),
+        name: b.name,
+        imageUrl: b.imageUrl,
+        linkUrl: b.linkUrl,
+        categories: b.categories,
+      }));
+    } catch (err) {
+      console.error("Local DB connection failed", err);
     }
-    brands = await Brand.find(query).sort({ displayOrder: 1, createdAt: -1 }).lean();
-  } catch (err) {
-    console.error("Local DB connection failed", err);
   }
 
   // Hide the section if no brands have been uploaded by admin
@@ -62,11 +84,10 @@ export default async function BrandsWeLove({ category }: { category?: string }) 
             >
               <div className="absolute inset-0 bg-gradient-to-t from-gray-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <div className="relative w-full h-full flex items-center justify-center">
-                <Image 
-                  src={brand.imageUrl} 
-                  alt={brand.name} 
-                  fill
-                  className="object-contain p-2 grayscale group-hover:grayscale-0 transition-all duration-300" 
+                <img
+                  src={resolveImg(brand.imageUrl || '')}
+                  alt={brand.name}
+                  className="w-full h-full object-contain p-2 grayscale group-hover:grayscale-0 transition-all duration-300"
                 />
               </div>
             </Link>

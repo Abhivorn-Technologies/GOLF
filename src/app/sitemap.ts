@@ -3,7 +3,7 @@ import dbConnect from '@/lib/mongodb';
 import Product from '@/models/Product';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'http://localhost:3000'; // Replace with production URL when deploying
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   
   // Connect to DB to fetch all product slugs
   await dbConnect();

@@ -15,6 +15,9 @@ export interface ProductType {
   features?: string[];
   slug?: string;
   _id?: string | any;
+  compareAtPrice?: string;
+  numericCompareAtPrice?: number;
+  variants?: { id: string, size: string, color: string, colorCode: string, stockCount: number, images: string[] }[];
 }
 
 export const ALL_PRODUCTS: ProductType[] = [

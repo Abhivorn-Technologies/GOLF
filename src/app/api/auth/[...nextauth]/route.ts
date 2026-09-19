@@ -9,34 +9,17 @@ export const authOptions: AuthOptions = {
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "email", placeholder: "admin@golfpro.com" },
+        email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        console.log("LOGIN ATTEMPT:", credentials?.email, credentials?.password);
-        console.log("NODE_ENV:", process.env.NODE_ENV);
-        
         if (!credentials?.email || !credentials.password) {
-          console.log("Missing credentials");
           return null;
-        }
-
-        // SECURITY: These hardcoded fallbacks are strictly for LOCAL testing 
-        // due to your local network blocking MongoDB. 
-        // They will NEVER be active in the production environment.
-        if (process.env.NODE_ENV === 'development') {
-          const email = credentials?.email?.trim();
-          const pass = credentials?.password?.trim();
-          console.log("Trimmed:", email, pass);
-          
-          if (email === 'customer@golfpro.com' && pass === 'customer123') {
-            return { id: '2', name: 'Test Customer', email: 'customer@golfpro.com', role: 'user' };
-          }
         }
 
         try {
           await dbConnect();
-          const user = await User.findOne({ email: credentials.email });
+          const user = await User.findOne({ email: credentials.email.trim().toLowerCase() });
 
           if (!user) return null;
 
@@ -45,18 +28,7 @@ export const authOptions: AuthOptions = {
 
           return { id: user._id.toString(), name: user.name, email: user.email, role: user.role };
         } catch (error) {
-          console.error("MongoDB connection failed in NextAuth. Using fallbacks only.");
-          
-          // Seamless mock login fallback if DB fails locally
-          if (process.env.NODE_ENV === 'development' && credentials?.email) {
-            return { 
-              id: 'mock-user-123', 
-              name: credentials.email.split('@')[0], 
-              email: credentials.email, 
-              role: 'user' 
-            };
-          }
-          
+          console.error("Auth error:", error);
           return null;
         }
       }

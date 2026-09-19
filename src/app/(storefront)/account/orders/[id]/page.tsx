@@ -3,10 +3,16 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Package, Truck, CreditCard, Clock, MapPin, Star, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Package, Truck, CreditCard, Clock, MapPin, Star, RotateCcw, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AccountLogoutButton from "@/app/(storefront)/account/_components/AccountLogoutButton";
 import AccountSidebar from "@/app/(storefront)/account/_components/AccountSidebar";
+
+function resolveImg(src?: string) {
+  if (!src || src === '/placeholder.png' || src === 'undefined' || src === 'null') return '/images/golf.png';
+  if (src.startsWith('data:') || src.startsWith('http') || src.startsWith('/')) return src;
+  return `/images/${src}`;
+}
 
 export default function OrderDetailsPage() {
   const { id } = useParams();
@@ -16,6 +22,43 @@ export default function OrderDetailsPage() {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewForm, setReviewForm] = useState({ rating: 0, comment: '' });
   const [submittingReview, setSubmittingReview] = useState(false);
+
+  // Custom Modal State for Cancel / Return (replacing native browser alerts)
+  const [modalType, setModalType] = useState<'cancel' | 'return' | null>(null);
+  const [modalReason, setModalReason] = useState('');
+  const [submittingAction, setSubmittingAction] = useState(false);
+
+  const handleActionSubmit = async () => {
+    if (!modalType || !order) return;
+    if (!modalReason.trim()) {
+      toast.error(`Please provide a reason for ${modalType === 'cancel' ? 'cancellation' : 'return'}`);
+      return;
+    }
+    setSubmittingAction(true);
+    try {
+      const res = await fetch(`/api/user/orders/${order._id}/action`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: modalType,
+          reason: modalReason.trim()
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(data.message || 'Request updated');
+        setModalType(null);
+        setModalReason('');
+        window.location.reload();
+      } else {
+        toast.error(data.error || 'Failed to process request');
+      }
+    } catch {
+      toast.error('An error occurred');
+    } finally {
+      setSubmittingAction(false);
+    }
+  };
 
   useEffect(() => {
     async function fetchOrder() {
@@ -34,6 +77,10 @@ export default function OrderDetailsPage() {
     }
 
     fetchOrder();
+
+    // Auto-poll status every 10s so user dashboard automatically updates when admin updates status
+    const interval = setInterval(fetchOrder, 10000);
+    return () => clearInterval(interval);
   }, [id]);
 
   if (loading) {
@@ -128,7 +175,7 @@ export default function OrderDetailsPage() {
                 </div>
                 {order.estimatedDelivery && order.shippingStatus !== 'delivered' && (
                   <p className="text-xs text-gray-500 font-medium mt-4 text-center">
-                    Estimated Delivery: <strong className="text-green-700">{new Date(order.estimatedDelivery).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' })}</strong>
+                    Estimated Delivery: <strong className="text-green-700">5–7 working days from order date ({new Date(order.estimatedDelivery).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })})</strong>
                   </p>
                 )}
               </div>
@@ -174,31 +221,46 @@ export default function OrderDetailsPage() {
               </div>
             </div>
 
-            {/* Tracking (if available) */}
+            {/* Delivery Information (Only when Tracking ID has been added by Admin) */}
             {order.trackingId && (
               <div className="bg-green-50 border border-green-100 rounded-2xl p-6 flex flex-col gap-4">
                  <h3 className="font-bold text-sm uppercase tracking-widest text-green-800 flex items-center gap-2">
                   <Truck className="w-4 h-4" /> Delivery Information
                 </h3>
                 <div className="flex flex-col gap-1 text-sm text-green-900">
-                   <span><strong>Courier:</strong> {order.courierName || 'Standard Shipping'}</span>
+                   {order.courierName && <span><strong>Courier:</strong> {order.courierName}</span>}
                    <span><strong>Tracking ID:</strong> {order.trackingId}</span>
-                   <span><strong>Est. Delivery:</strong> {order.estimatedDelivery ? new Date(order.estimatedDelivery).toLocaleDateString() : 'TBD'}</span>
+                   <span><strong>Est. Delivery:</strong> 5–7 working days from order date</span>
                 </div>
               </div>
             )}
 
-            {/* Cancel/Return Status */}
+            {/* Cancel / Return / Refund Status Banner */}
             {(order.shippingStatus === 'cancelled' || (order.returnStatus && order.returnStatus !== 'none')) ? (
-              <div className="bg-red-50 border border-red-100 rounded-2xl p-6 flex flex-col gap-4">
-                 <h3 className="font-bold text-sm uppercase tracking-widest text-red-800 flex items-center gap-2">
-                  Action Status
+              <div className={`rounded-2xl p-6 flex flex-col gap-4 border ${
+                order.shippingStatus === 'cancelled'
+                  ? 'bg-rose-50 border-rose-200 text-rose-900'
+                  : order.returnStatus === 'approved' || order.returnStatus === 'refunded' 
+                  ? 'bg-emerald-50 border-emerald-200 text-emerald-900' 
+                  : order.returnStatus === 'rejected'
+                  ? 'bg-red-50 border-red-200 text-red-900'
+                  : 'bg-amber-50 border-amber-200 text-amber-900'
+              }`}>
+                 <h3 className="font-bold text-sm uppercase tracking-widest flex items-center gap-2">
+                  {order.shippingStatus === 'cancelled' 
+                    ? '🚫 Order Cancelled' 
+                    : order.returnStatus === 'refunded'
+                    ? '✅ Return Refunded'
+                    : order.returnStatus === 'approved'
+                    ? '✅ Return Approved - Refund Processing'
+                    : order.returnStatus === 'rejected'
+                    ? '❌ Return Request Rejected'
+                    : '⏳ Return Under Review'}
                 </h3>
-                <div className="flex flex-col gap-1 text-sm text-red-900">
+                <div className="flex flex-col gap-1 text-sm">
                    {order.shippingStatus === 'cancelled' && (
                      <>
-                      <span className="font-bold">Order Cancelled</span>
-                      <span>Reason: {order.cancellationReason || 'Requested by customer'}</span>
+                      <span className="font-bold">Cancellation Reason: {order.cancellationReason || 'Requested by customer'}</span>
                      </>
                    )}
                    {order.returnStatus && order.returnStatus !== 'none' && (
@@ -207,48 +269,57 @@ export default function OrderDetailsPage() {
                       <span>Reason: {order.returnReason || 'Requested by customer'}</span>
                      </>
                    )}
+                   {Number(order.refundAmount) > 0 ? (
+                     <div className="mt-2 p-3 bg-white/80 rounded-xl border border-emerald-200 font-bold text-sm text-emerald-800 flex items-center justify-between">
+                       <span>Refund Processed:</span>
+                       <span>₹{Number(order.refundAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                     </div>
+                   ) : order.paymentStatus === 'paid' ? (
+                     <div className="mt-2 p-3 bg-amber-50 rounded-xl border border-amber-200 font-bold text-xs text-amber-800 flex items-center justify-between">
+                       <span>Refund Status:</span>
+                       <span>⏳ Pending Admin Approval</span>
+                     </div>
+                   ) : null}
                 </div>
               </div>
             ) : (
               <div className="flex flex-wrap gap-3">
                 {order.shippingStatus === 'processing' && (
                   <button 
-                    onClick={async () => {
-                      if(confirm('Are you sure you want to cancel this order?')) {
-                        const reason = prompt('Please provide a reason for cancellation:');
-                        if (reason !== null) {
-                          await fetch('/api/user/orders', {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ orderId: order._id, action: 'cancel', reason: reason || 'Customer requested cancellation' })
-                          });
-                          window.location.reload();
-                        }
-                      }
+                    onClick={() => {
+                      setModalReason('');
+                      setModalType('cancel');
                     }}
                     className="px-6 py-3 bg-white border border-red-200 text-red-600 font-bold rounded-xl hover:bg-red-50 transition-colors text-sm uppercase tracking-widest"
                   >
                     Cancel Order
                   </button>
                 )}
-                {order.shippingStatus === 'delivered' && (!order.returnStatus || order.returnStatus === 'none') && (
-                  <button 
-                    onClick={async () => {
-                      const reason = prompt('Please provide a reason for the return:');
-                      if (reason) {
-                        await fetch('/api/user/orders', {
-                          method: 'PUT',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ orderId: order._id, action: 'return', reason })
-                        });
-                        window.location.reload();
-                      }
-                    }}
-                    className="px-6 py-3 bg-white border border-gray-200 text-black font-bold rounded-xl hover:bg-gray-50 transition-colors text-sm uppercase tracking-widest"
-                  >
-                    Request Return
-                  </button>
-                )}
+                {order.shippingStatus === 'delivered' && (!order.returnStatus || order.returnStatus === 'none') && (() => {
+                  const deliveredTime = new Date(order.updatedAt || order.createdAt).getTime();
+                  const returnWindowMs = 7 * 24 * 60 * 60 * 1000;
+                  const isWithin7Days = (Date.now() - deliveredTime) <= returnWindowMs;
+
+                  if (isWithin7Days) {
+                    return (
+                      <button 
+                        onClick={() => {
+                          setModalReason('');
+                          setModalType('return');
+                        }}
+                        className="px-6 py-3 bg-white border border-gray-200 text-black font-bold rounded-xl hover:bg-gray-50 transition-colors text-sm uppercase tracking-widest"
+                      >
+                        Request Return
+                      </button>
+                    );
+                  }
+
+                  return (
+                    <div className="px-4 py-3 bg-gray-50 border border-gray-200 text-gray-400 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5" title="7-day return policy expired">
+                      <span>Return window expired (7-day policy)</span>
+                    </div>
+                  );
+                })()}
                 {/* Re-order button */}
                 {order.products?.length > 0 && (
                   <button
@@ -281,6 +352,56 @@ export default function OrderDetailsPage() {
                     {[1,2,3,4,5].map(s => <Star key={s} className={`w-4 h-4 ${s <= order.feedback.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`} />)}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Custom Cancel / Return Action Modal */}
+            {modalType && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                <div className="bg-white rounded-2xl p-6 sm:p-8 w-full max-w-md shadow-2xl flex flex-col gap-5 border border-gray-100">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-xl font-black uppercase tracking-tight text-black">
+                      {modalType === 'cancel' ? 'Cancel Order' : 'Request Return'}
+                    </h2>
+                    <button 
+                      onClick={() => setModalType(null)}
+                      className="text-gray-400 hover:text-black p-1 rounded-full hover:bg-gray-100 transition-colors"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  <p className="text-sm text-gray-500 font-medium">
+                    {modalType === 'cancel' 
+                      ? 'Are you sure you want to cancel this order? Please provide your reason below.' 
+                      : 'Please provide the reason for your return request.'}
+                  </p>
+
+                  <textarea
+                    rows={4}
+                    placeholder={modalType === 'cancel' ? 'Reason for cancellation...' : 'Reason for return...'}
+                    value={modalReason}
+                    onChange={(e) => setModalReason(e.target.value)}
+                    className="w-full border border-gray-200 rounded-xl p-3.5 text-sm outline-none focus:border-black resize-none bg-gray-50 focus:bg-white transition-all font-medium text-gray-900"
+                  />
+
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      onClick={handleActionSubmit}
+                      disabled={submittingAction}
+                      className={`flex-1 ${modalType === 'cancel' ? 'bg-red-600 hover:bg-red-700' : 'bg-black hover:bg-gray-800'} text-white py-3.5 rounded-xl font-bold uppercase tracking-widest text-xs transition-colors disabled:opacity-50`}
+                    >
+                      {submittingAction ? 'Submitting...' : (modalType === 'cancel' ? 'Confirm Cancellation' : 'Submit Return')}
+                    </button>
+                    <button 
+                      onClick={() => setModalType(null)}
+                      disabled={submittingAction}
+                      className="px-5 py-3.5 border border-gray-200 rounded-xl text-xs font-bold uppercase tracking-widest text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -339,13 +460,20 @@ export default function OrderDetailsPage() {
               
               <div className="flex flex-col gap-6">
                 {order.products?.map((item: any, idx: number) => {
-                  const prodName = item.product?.name || item.product?.title || 'Unknown Product';
-                  const prodImage = item.product?.image || (item.product?.images && item.product.images[0]) || '/placeholder.png';
+                  const prodName = typeof item.product === 'object' ? (item.product?.title || item.product?.name) : (item.title || item.name || 'Unknown Product');
+                  const rawImage = typeof item.product === 'object' 
+                    ? (item.product?.image || (Array.isArray(item.product?.images) ? item.product.images[0] : null))
+                    : (item.image || (Array.isArray(item.images) ? item.images[0] : null));
                   
                   return (
                   <div key={idx} className="flex gap-6 items-center bg-white p-4 rounded-xl border border-gray-200">
                     <div className="w-20 h-20 bg-gray-50 rounded-lg flex items-center justify-center p-2 shrink-0">
-                      <img src={prodImage.startsWith('http') ? prodImage : `/images/${prodImage}`} alt={prodName} className="w-full h-full object-contain mix-blend-multiply" />
+                      <img 
+                        src={resolveImg(rawImage)} 
+                        alt={prodName} 
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/images/golf.png'; }}
+                        className="w-full h-full object-contain mix-blend-multiply" 
+                      />
                     </div>
                     
                     <div className="flex flex-col gap-1 flex-1">

@@ -1,16 +1,16 @@
 import mongoose from 'mongoose';
 
 const AddressSchema = new mongoose.Schema({
-  name: { type: String, required: true, maxlength: 50 },
-  phone: { type: String, required: true, maxlength: 20 },
+  name: { type: String, maxlength: 50 },
+  phone: { type: String, maxlength: 20 },
   houseNumber: { type: String, maxlength: 100 },
-  street: { type: String, required: true, maxlength: 100 },
+  street: { type: String, maxlength: 100 },
   area: { type: String, maxlength: 100 },
   landmark: { type: String, maxlength: 100 },
-  city: { type: String, required: true, maxlength: 50 },
-  state: { type: String, required: true, maxlength: 50 },
-  zip: { type: String, required: true, maxlength: 20 },
-  country: { type: String, required: true, maxlength: 50, default: 'India' },
+  city: { type: String, maxlength: 50 },
+  state: { type: String, maxlength: 50 },
+  zip: { type: String, maxlength: 20 },
+  country: { type: String, maxlength: 50, default: 'India' },
   isDefaultBilling: { type: Boolean, default: false },
   isDefaultShipping: { type: Boolean, default: false }
 });

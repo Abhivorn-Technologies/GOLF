@@ -11,7 +11,7 @@ export default async function BallsSidebarFilter() {
   await dbConnect();
   const settings = await PageSettings.findOne({ page: 'balls' }).lean();
 
-  let allowedAttributes = settings?.allowedFilters || [];
+  const allowedAttributes = settings?.allowedFilters || [];
   
   return <DynamicSidebarFilter filterData={categoryData} allowedAttributes={allowedAttributes} />;
 }

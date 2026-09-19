@@ -1,31 +1,20 @@
 import React from 'react';
 import Link from 'next/link';
-import dbConnect from '@/lib/mongodb';
-import Product from '@/models/Product';
-import Image from 'next/image';
 import QuickAddOverlay from "@/app/(storefront)/product/_components/QuickAddOverlay";
 import WishlistButton from '@/components/WishlistButton';
 
-export default async function NewArrivals() {
-  let latestProducts: any[] = [];
-  try {
-    await dbConnect();
-    let products = await Product.find({ isNewArrival: true, inStock: true }).sort({ createdAt: -1 }).limit(4).lean();
-    
-    // Fallback: if admin hasn't marked any products as new arrivals, just show the latest 4 products
-    if (products.length === 0) {
-      products = await Product.find({ inStock: true }).sort({ createdAt: -1 }).limit(4).lean();
-    }
-    latestProducts = products.map((p: any) => ({
-      id: p._id.toString(),
-      brand: p.brand,
-      name: p.title,
-      price: `₹${p.price.toLocaleString('en-IN')}`,
-      image: p.images?.[0] || 'placeholder.png'
-    }));
-  } catch (error) {
-    console.error('Failed to fetch new arrivals', error);
-  }
+function resolveImg(src: string) {
+  if (!src) return '/images/golf.png';
+  if (src.startsWith('data:') || src.startsWith('http') || src.startsWith('/')) return src;
+  return `/images/${src}`;
+}
+
+interface NewArrivalsProps {
+  products?: any[];
+}
+
+export default function NewArrivals({ products }: NewArrivalsProps) {
+  const latestProducts = products || [];
 
   return (
     <section className="w-full py-16 bg-white border-t border-gray-100">
@@ -39,9 +28,9 @@ export default async function NewArrivals() {
           {latestProducts.map((product) => (
             <div key={product.id} className="group relative">
               <div className="relative h-64 w-full bg-zinc-100 rounded-xl mb-4 overflow-hidden block">
-                <WishlistButton productId={product.id} />
-                <Link href={`/product/${product.slug || product.id}`} className="w-full h-full block">
-                  <Image src={product.image.startsWith('http') || product.image.startsWith('/') ? product.image : `/images/${product.image}`} alt={product.name} fill className="object-contain p-4 mix-blend-multiply" />
+                <WishlistButton productId={product.id || product._id} />
+                <Link href={`/product/${product.slug || product.id || product._id}`} className="relative w-full h-full block">
+                  <img src={resolveImg(product.image || '')} alt={product.name} className="absolute inset-0 w-full h-full object-contain p-4 mix-blend-multiply" />
                 </Link>
                 <div suppressHydrationWarning>
                   <QuickAddOverlay product={product} />

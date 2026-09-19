@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Order from '@/models/Order';
+import Product from '@/models/Product';
 import { verifyAdminSession } from '@/lib/adminAuth';
 
 export async function GET(req: NextRequest) {
@@ -78,19 +79,52 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Order ID required' }, { status: 400 });
     }
 
+    const existingOrder = await Order.findById(orderId);
+    if (!existingOrder) {
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    }
+
+    const wasCancelled = existingOrder.shippingStatus === 'cancelled';
+    const wasRefunded = ['approved', 'refunded'].includes(existingOrder.returnStatus);
+
+    const isNowCancelled = shippingStatus === 'cancelled';
+    const isNowRefunded = returnStatus && ['approved', 'refunded'].includes(returnStatus);
+
+    // Automatic inventory restocking
+    if ((isNowCancelled && !wasCancelled) || (isNowRefunded && !wasRefunded)) {
+      for (const item of existingOrder.products) {
+        if (item.product) {
+          const variantId = item.variants?.get ? item.variants.get('variantId') : item.variants?.variantId;
+          if (variantId) {
+            await Product.updateOne(
+              { _id: item.product, "variants.id": variantId },
+              { $inc: { "variants.$.stockCount": item.quantity } }
+            );
+          } else {
+            await Product.findByIdAndUpdate(item.product, {
+              $inc: { stockCount: item.quantity },
+              inStock: true
+            });
+          }
+        }
+      }
+    }
+
     const updateData: any = {};
     if (returnStatus) updateData.returnStatus = returnStatus;
     if (shippingStatus) updateData.shippingStatus = shippingStatus;
+
+    if (returnStatus === 'refunded') {
+      if (!existingOrder.refundAmount) {
+        updateData.refundAmount = existingOrder.totalAmount;
+      }
+    }
 
     const updatedOrder = await Order.findByIdAndUpdate(
       orderId,
       updateData,
       { new: true }
     );
-
-    if (!updatedOrder) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
-    }
 
     return NextResponse.json({ success: true, order: updatedOrder });
   } catch (error: any) {

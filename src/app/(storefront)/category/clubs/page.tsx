@@ -11,22 +11,25 @@ import CategoryProductGrid from "@/app/(storefront)/_components/CategoryProductG
 import CategorySubCategories from "@/app/(storefront)/_components/CategorySubCategories";
 import BestBrandsCarousel from "@/app/(storefront)/_components/BestBrandsCarousel";
 import CategoryShopByCategory from "@/app/(storefront)/_components/CategoryShopByCategory";
-import dbConnect from '@/lib/mongodb';
-import PageSettings from '@/models/PageSettings';
+import { getPageSettings } from '@/lib/pageSettings';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 export default async function ClubsPage() {
-  await dbConnect();
-  const settings = await PageSettings.findOne({ page: 'clubs' }).lean();
-  
-  // Sanitize Mongoose ObjectIds for Next.js Client Component props
-  const plainSettings = settings ? JSON.parse(JSON.stringify(settings)) : {};
+  let bestBrands: any[] = [];
+  let shopByCategory: any[] = [];
+  let subCategories: any[] = [];
 
-  const bestBrands = plainSettings.bestBrands || [];
-  const shopByCategory = plainSettings.shopByCategory || [];
-  const subCategories = plainSettings.subCategories || [];
+  try {
+    const settings = await getPageSettings('clubs');
+    if (settings) {
+      bestBrands = settings.bestBrands || [];
+      shopByCategory = settings.shopByCategory || [];
+      subCategories = settings.subCategories || [];
+    }
+  } catch (e) {
+    console.error("ClubsPage DB settings fetch error, using fallbacks:", e);
+  }
 
   return (
     <div className="min-h-screen bg-[#fbf9f9] flex flex-col font-sans">

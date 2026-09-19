@@ -17,7 +17,8 @@ import {
   Settings,
   RotateCcw,
   Tag,
-  Ticket
+  Ticket,
+  Megaphone
 } from 'lucide-react';
 
 const navItems = [
@@ -27,6 +28,7 @@ const navItems = [
   { name: 'Returns', href: '/admin/returns', icon: RotateCcw },
   { name: 'Customers', href: '/admin/customers', icon: Users },
   { name: 'Coupons', href: '/admin/coupons', icon: Ticket },
+  { name: 'Broadcast Offers', href: '/admin/broadcast', icon: Megaphone },
   { name: 'Banners', href: '/admin/banners', icon: ImageIcon },
   { name: 'Brands', href: '/admin/brands', icon: Tag },
   { name: 'Filters', href: '/admin/category-settings', icon: Filter },
@@ -67,6 +69,7 @@ export default function AdminSidebar() {
             src="/images/golf.png" 
             alt="Golf Logo" 
             fill 
+            sizes="(max-width: 768px) 100vw, 240px"
             className={`object-contain ${isCollapsed ? 'object-center p-0' : 'object-center p-0 scale-125'}`}
             priority
           />
@@ -76,7 +79,9 @@ export default function AdminSidebar() {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1.5 custom-scrollbar overflow-hidden">
         {navItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = item.href === '/admin' 
+            ? pathname === '/admin' 
+            : pathname.startsWith(item.href);
           const Icon = item.icon;
           
           return (

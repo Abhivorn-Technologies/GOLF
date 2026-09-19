@@ -19,7 +19,7 @@ export default function Footer() {
             </div>
             <div>
               <h5 className="text-zinc-900 font-bold text-base mb-1">Free Shipping</h5>
-              <p className="text-zinc-500 text-sm">On orders over $99</p>
+              <p className="text-zinc-500 text-sm">On orders over ₹4,999</p>
             </div>
           </div>
           
@@ -59,8 +59,8 @@ export default function Footer() {
           
           {/* Brand & Newsletter */}
           <div className="lg:col-span-4 flex flex-col">
-            <Link href="/" className="mb-6 inline-block pl-2">
-              <img src="/images/golf.png" alt="GolfPro Logo" className="h-12 w-auto object-contain scale-[1.4] origin-left brightness-0" />
+            <Link href="/" className="mb-8 inline-block ml-2 md:ml-6">
+              <img src="/images/golf.png" alt="LORVEN GOLF Logo" className="h-24 w-auto object-contain origin-left brightness-0" />
             </Link>
             <p className="text-zinc-500 text-sm mb-8 leading-relaxed max-w-sm">
               The ultimate destination for premium golf equipment, apparel, and accessories. Elevate your game with the best brands in the sport.
@@ -122,7 +122,7 @@ export default function Footer() {
               {[
                 { name: 'My Account', path: '/account' },
                 { name: 'Order Tracking', path: '/account/orders' },
-                { name: 'About GolfPro', path: '/about' },
+                { name: 'About LORVEN GOLF', path: '/about' },
                 { name: 'Shipping Policy', path: '/shipping' },
                 { name: '100-Day Guarantee', path: '/guarantee' },
                 { name: 'Privacy Policy', path: '/privacy' },
@@ -144,15 +144,20 @@ export default function Footer() {
             <ul className="space-y-5">
               <li className="flex items-start gap-3 text-zinc-500 hover:text-zinc-900 transition-colors group cursor-pointer font-medium">
                 <MapPin className="w-5 h-5 text-gray-400 group-hover:text-green-600 transition-colors mt-0.5 shrink-0" />
-                <span className="text-sm leading-relaxed">123 Fairway Drive<br/>Suite 400<br/>Scottsdale, AZ 85251</span>
+                <span className="text-sm leading-relaxed font-medium text-zinc-600">
+                  <strong className="text-zinc-900 font-bold block mb-0.5">LORVEN GOLF</strong>
+                  Plot No. 8-1-43/1/B, Satya Colony,<br/>
+                  Qutub Shahi Tombs Road, Shaikpet,<br/>
+                  Golconda, Hyderabad, Telangana - 500008
+                </span>
               </li>
               <li className="flex items-center gap-3 text-zinc-500 hover:text-zinc-900 transition-colors group cursor-pointer font-medium">
                 <Phone className="w-5 h-5 text-gray-400 group-hover:text-green-600 transition-colors shrink-0" />
-                <span className="text-sm">1-800-GOLF-PRO</span>
+                <span className="text-sm">+91 98765 43210</span>
               </li>
               <li className="flex items-center gap-3 text-zinc-500 hover:text-zinc-900 transition-colors group cursor-pointer font-medium">
                 <Mail className="w-5 h-5 text-gray-400 group-hover:text-green-600 transition-colors shrink-0" />
-                <span className="text-sm">support@golfpro.com</span>
+                <span className="text-sm">support@lorvengolf.com</span>
               </li>
             </ul>
           </div>
@@ -161,10 +166,10 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-gray-400 text-sm font-medium text-center md:text-left">
-            © {new Date().getFullYear()} GolfPro Inc. All rights reserved.
+            © {new Date().getFullYear()} LORVEN GOLF. All rights reserved.
           </p>
           <p className="text-gray-400 text-sm font-medium text-center md:text-right">
-            Developed by <span className="font-bold">Abhivorn Technologies Pvt Ltd</span>
+            Developed by <span className="font-bold text-black">Abhivorn Technologies Pvt Ltd</span>
           </p>
         </div>
 

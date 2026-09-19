@@ -25,11 +25,15 @@ export interface CartItem {
 interface CartContextType {
   cartItems: CartItem[];
   addToCart: (product: ProductType, quantity: number, variants?: Record<string, string>) => void;
+  buyNow: (product: ProductType, quantity: number, variants?: Record<string, string>) => void;
   updateQuantity: (cartItemId: string, quantity: number) => void;
   removeFromCart: (cartItemId: string) => void;
   updateCartItemVariants: (cartItemId: string, variants: Record<string, string>) => void;
   cartCount: number;
   subtotal: number;
+  mrpSubtotal: number;
+  productDiscountSavings: number;
+  totalSavings: number;
   shipping: number;
   taxes: number;
   total: number;
@@ -88,6 +92,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const buyNow = (product: ProductType, quantity: number, variants?: Record<string, string>) => {
+    const sortedVariants = variants ? Object.entries(variants).sort().toString() : '';
+    const cartItemId = `${product.id}-${sortedVariants}`;
+    setCartItems([{ cartItemId, product, quantity, variants }]);
+  };
+
   const updateQuantity = (cartItemId: string, quantity: number) => {
     setCartItems(prev => prev.map(item => 
       item.cartItemId === cartItemId 
@@ -103,12 +113,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const updateCartItemVariants = (cartItemId: string, variants: Record<string, string>) => {
     setCartItems(prev => prev.map(item => {
       if (item.cartItemId === cartItemId) {
-        // Calculate the new cartItemId
         const sortedVariants = Object.entries(variants).sort().toString();
         const newCartItemId = `${item.product.id}-${sortedVariants}`;
-        
-        // Note: If an item with this newCartItemId already exists, ideally we'd merge them. 
-        // For simplicity, we just update this item's variants and ID.
         return { ...item, variants, cartItemId: newCartItemId };
       }
       return item;
@@ -140,14 +146,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return acc + (parsePrice(item.product.price) * item.quantity);
   }, 0);
 
-  const shipping = subtotal > 0 ? (subtotal > 10000 ? 0 : 500) : 0;
-  const taxes = subtotal * 0.18;
-  const total = subtotal + shipping + taxes - couponDiscount;
+  const mrpSubtotal = cartItems.reduce((acc, item) => {
+    const rawCompare = (item.product as any).numericCompareAtPrice || (item.product as any).compareAtPrice;
+    const parsedCompare = parsePrice(rawCompare);
+    const currentPrice = parsePrice(item.product.price);
+    const effectiveMrp = (parsedCompare > currentPrice) ? parsedCompare : currentPrice;
+    return acc + (effectiveMrp * item.quantity);
+  }, 0);
+
+  const productDiscountSavings = Math.max(0, mrpSubtotal - subtotal);
+  const totalSavings = productDiscountSavings + couponDiscount;
+
+  const shipping = 0;
+  const taxes = 0;
+  const total = Math.max(0, subtotal - couponDiscount);
 
   return (
     <CartContext.Provider value={{ 
-      cartItems, addToCart, updateQuantity, removeFromCart, updateCartItemVariants, cartCount,
-      subtotal, shipping, taxes, total,
+      cartItems, addToCart, buyNow, updateQuantity, removeFromCart, updateCartItemVariants, cartCount,
+      subtotal, mrpSubtotal, productDiscountSavings, totalSavings, shipping, taxes, total,
       shippingAddress, setShippingAddress, couponCode, couponDiscount, setCoupon, clearCart 
     }}>
       {children}

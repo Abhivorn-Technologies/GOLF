@@ -39,7 +39,7 @@ export default function CheckoutPayment() {
       const orderResponse = await fetch('/api/orders/create-razorpay-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cartItems, shippingAddress, discountAmount: couponDiscount || 0 })
+        body: JSON.stringify({ cartItems, shippingAddress, couponCode })
       });
       
       const orderData = await orderResponse.json();
@@ -48,6 +48,9 @@ export default function CheckoutPayment() {
         throw new Error(orderData.error || 'Failed to create payment order');
       }
 
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+      const isPublic = siteUrl && !siteUrl.includes('localhost') && !siteUrl.includes('127.0.0.1');
+
       // 2. Open Razorpay Widget
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, 
@@ -55,7 +58,7 @@ export default function CheckoutPayment() {
         currency: orderData.currency,
         name: "Lorven Golf",
         description: "Premium Golf Equipment",
-        image: "/images/golf.png",
+        ...(isPublic ? { image: `${siteUrl}/images/golf.png` } : {}),
         order_id: orderData.id,
         handler: async function (response: any) {
           // 3. Verify signature and save order on our backend
@@ -70,8 +73,7 @@ export default function CheckoutPayment() {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
-                couponCode,
-                discountAmount: couponDiscount,
+                couponCode
               })
             });
 

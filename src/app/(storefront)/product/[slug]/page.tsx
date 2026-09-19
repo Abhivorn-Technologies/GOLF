@@ -67,7 +67,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           name: doc.title,
           brand: doc.brand,
           price: `₹${doc.price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
-          image: doc.images && doc.images.length > 0 ? doc.images[0] : 'placeholder.png',
+          image: doc.images && doc.images.length > 0 ? doc.images[0] : '/images/golf.png',
           images: doc.images || [],
           category: doc.category,
           style: doc.style,
@@ -77,6 +77,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
           size: doc.size,
           description: doc.description,
           features: doc.features,
+          variants: doc.variants ? doc.variants.map((v: any) => ({
+            ...v,
+            _id: v._id ? v._id.toString() : undefined
+          })) : [],
+          attributes: doc.attributes ? doc.attributes.map((a: any) => ({
+            ...a,
+            _id: a._id ? a._id.toString() : undefined
+          })) : [],
         };
 
         const relatedDocs = await Product.find({ 
@@ -89,7 +97,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           name: rDoc.title,
           brand: rDoc.brand,
           price: `₹${rDoc.price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
-          image: rDoc.images && rDoc.images.length > 0 ? rDoc.images[0] : 'placeholder.png',
+          image: rDoc.images && rDoc.images.length > 0 ? rDoc.images[0] : '/images/golf.png',
           category: rDoc.category,
           slug: rDoc.slug
         }));

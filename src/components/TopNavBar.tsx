@@ -20,7 +20,13 @@ export default function TopNavBar({ megaMenuData = {}, utilityBar }: { megaMenuD
   const pathname = usePathname();
 
   React.useEffect(() => {
+    setHoveredCategory(null);
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
+
+  React.useEffect(() => {
     if (!utilityBar?.announcements || utilityBar.announcements.length <= 1) return;
+
     const interval = setInterval(() => {
       setIsFading(true);
       setTimeout(() => {
@@ -29,7 +35,7 @@ export default function TopNavBar({ megaMenuData = {}, utilityBar }: { megaMenuD
       }, 500); // 500ms fade out duration
     }, 4000); // 4s total interval
     return () => clearInterval(interval);
-  }, [utilityBar?.announcements]);
+  }, [JSON.stringify(utilityBar?.announcements)]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +45,8 @@ export default function TopNavBar({ megaMenuData = {}, utilityBar }: { megaMenuD
     }
   };
 
-  const navLinks = ['Home', 'Clubs', 'Shoes', 'Apparel', 'Bags', 'Balls', 'Accessories'];
+  const navLinks = ['Home', 'About', 'Clubs', 'Shoes', 'Apparel', 'Bags', 'Balls', 'Accessories'];
+  const productCategories = ['Clubs', 'Shoes', 'Apparel', 'Bags', 'Balls', 'Accessories'];
 
   return (
     <header className="w-full bg-white border-b border-gray-200 sticky top-0 z-50 group" onMouseLeave={() => setHoveredCategory(null)}>
@@ -54,12 +61,12 @@ export default function TopNavBar({ megaMenuData = {}, utilityBar }: { megaMenuD
         >
           {utilityBar?.announcements?.length > 0 
             ? utilityBar.announcements[activeAnnouncement]
-            : "Welcome to Golf Discount! Enjoy fast shipping on all orders."}
+            : "Welcome to LORVEN GOLF! Enjoy fast shipping on all orders."}
         </div>
       </div>
 
       {/* Main Navigation Row 1: Logo, Search, Actions */}
-      <div className="px-4 md:px-8 py-4 flex items-center justify-between gap-4 md:gap-8 max-w-7xl mx-auto">
+      <div className="px-4 md:px-8 py-2 md:py-1 flex items-center justify-between gap-4 md:gap-8 max-w-7xl mx-auto">
         
         {/* Mobile Menu Toggle */}
         <button 
@@ -69,8 +76,8 @@ export default function TopNavBar({ megaMenuData = {}, utilityBar }: { megaMenuD
           {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
 
-        <Link href="/" className="flex-1 flex items-center justify-center md:justify-start relative md:flex-shrink-0 md:flex-none">
-          <img src="/images/golf.png" alt="GolfPro Logo" className="h-16 md:h-20 w-auto object-contain scale-[1.2] md:scale-[1.5]" />
+        <Link href="/" onClick={() => setHoveredCategory(null)} className="flex-1 flex items-center justify-center md:justify-start relative md:flex-shrink-0 md:flex-none ml-3 md:ml-8">
+          <img src="/images/golf.png" alt="LORVEN GOLF Logo" className="h-16 md:h-20 w-auto object-contain scale-[1.2] md:scale-[1.5]" />
         </Link>
 
         {/* Search Bar */}
@@ -94,24 +101,24 @@ export default function TopNavBar({ megaMenuData = {}, utilityBar }: { megaMenuD
           {status === 'loading' ? (
             <div className="w-6 h-6 animate-pulse bg-gray-200 rounded-full"></div>
           ) : session ? (
-            <Link href="/account" className="hidden sm:flex items-center space-x-2 text-zinc-700 hover:text-green-600 transition-colors">
+            <Link href="/account" onClick={() => setHoveredCategory(null)} className="hidden sm:flex items-center space-x-2 text-zinc-700 hover:text-green-600 transition-colors">
               <User className="w-6 h-6" />
               <span className="hidden lg:block font-medium text-sm">
                 {session.user?.name || 'Account'}
               </span>
             </Link>
           ) : (
-            <Link href="/login" className="hidden sm:flex items-center space-x-2 text-zinc-700 hover:text-green-600 transition-colors">
+            <Link href="/login" onClick={() => setHoveredCategory(null)} className="hidden sm:flex items-center space-x-2 text-zinc-700 hover:text-green-600 transition-colors">
               <User className="w-6 h-6" />
               <span className="hidden lg:block font-medium text-sm">Account</span>
             </Link>
           )}
 
-          <Link href={session ? "/account/wishlist" : "/login"} className="hidden sm:flex items-center space-x-2 text-zinc-700 hover:text-green-600 transition-colors">
+          <Link href={session ? "/account/wishlist" : "/login"} onClick={() => setHoveredCategory(null)} className="hidden sm:flex items-center space-x-2 text-zinc-700 hover:text-green-600 transition-colors">
             <Heart className="w-6 h-6" />
           </Link>
 
-          <Link href="/cart" className="flex items-center space-x-2 text-zinc-700 hover:text-green-600 transition-colors relative">
+          <Link href="/cart" onClick={() => setHoveredCategory(null)} className="flex items-center space-x-2 text-zinc-700 hover:text-green-600 transition-colors relative">
             <ShoppingCart className="w-6 h-6" />
             <span className="absolute -top-1 -right-2 bg-green-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
               {cartCount}
@@ -121,27 +128,30 @@ export default function TopNavBar({ megaMenuData = {}, utilityBar }: { megaMenuD
       </div>
 
       {/* Bottom Row: Navigation Links */}
-      <nav className="bg-white px-8 hidden md:block relative">
-        <div className="max-w-7xl mx-auto flex items-center justify-center space-x-8 lg:space-x-12">
+      <nav className="bg-white px-8 hidden md:block relative border-t border-gray-100">
+        <div className="max-w-7xl mx-auto flex items-center justify-center space-x-2 lg:space-x-4 py-2">
           {navLinks.map((item) => {
-            const itemPath = item === 'Home' ? '/' : `/category/${item.toLowerCase()}`;
-            const isActive = pathname === itemPath || (item !== 'Home' && pathname.startsWith(itemPath));
+            const itemPath = item === 'Home' ? '/' : (item === 'About' ? '/about' : `/category/${item.toLowerCase()}`);
+            const isActive = pathname === itemPath || (item !== 'Home' && item !== 'About' && pathname.startsWith(itemPath));
 
             return (
             <div 
               key={item} 
-              onMouseEnter={() => setHoveredCategory(item)}
-              className="py-4"
+              onMouseEnter={() => setHoveredCategory(productCategories.includes(item) ? item : null)}
+              className="relative"
             >
               <Link 
                 href={itemPath}
-                className={`text-sm font-semibold tracking-wide uppercase transition-colors flex items-center gap-1 relative
-                  ${hoveredCategory === item || isActive ? 'text-black' : 'text-zinc-500 hover:text-black'}`}
+                onClick={() => setHoveredCategory(null)}
+                className={`text-xs font-bold tracking-widest uppercase transition-all duration-200 flex items-center px-4 py-2 rounded-full ${
+                  isActive 
+                    ? 'bg-zinc-900 text-white font-black shadow-xs' 
+                    : hoveredCategory === item
+                    ? 'bg-zinc-100 text-zinc-900'
+                    : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50'
+                }`}
               >
                 {item}
-                {isActive && (
-                  <span className="absolute -bottom-[22px] left-0 w-full h-[2px] bg-black rounded-t-full"></span>
-                )}
               </Link>
             </div>
             );
@@ -149,10 +159,11 @@ export default function TopNavBar({ megaMenuData = {}, utilityBar }: { megaMenuD
         </div>
 
         {/* Mega Menu Dropdown */}
-        {hoveredCategory && hoveredCategory !== 'Home' && (
+        {hoveredCategory && productCategories.includes(hoveredCategory) && (
           <div 
             className="absolute left-0 w-full bg-white shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border-t border-gray-100 z-50 overflow-hidden"
             onMouseEnter={() => setHoveredCategory(hoveredCategory)}
+            onMouseLeave={() => setHoveredCategory(null)}
           >
             <div className="max-w-7xl mx-auto px-8 py-10 flex gap-12">
               
@@ -262,59 +273,74 @@ export default function TopNavBar({ megaMenuData = {}, utilityBar }: { megaMenuD
             </button>
           </form>
 
-          {navLinks.map((item) => (
-            <div key={item} className="border-b border-gray-50 last:border-0 pb-2">
-              {item === 'Home' ? (
-                <Link 
-                  href="/"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-sm font-bold text-zinc-800 hover:text-green-600 tracking-wide uppercase p-3 block"
-                >
-                  Home
-                </Link>
-              ) : (
-                <>
-                  <button 
-                    onClick={() => setExpandedMobileCategory(expandedMobileCategory === item ? null : item)}
-                    className="w-full flex items-center justify-between text-sm font-bold text-zinc-800 hover:text-green-600 tracking-wide uppercase p-3"
+          {navLinks.map((item) => {
+            const itemPath = item === 'Home' ? '/' : (item === 'About' ? '/about' : `/category/${item.toLowerCase()}`);
+            const isCategory = productCategories.includes(item);
+            const hasSubMenu = isCategory && megaMenuData[item] && (megaMenuData[item].brands?.length > 0 || Object.keys(megaMenuData[item].attributes || {}).length > 0);
+
+            return (
+              <div key={item} className="border-b border-gray-50 last:border-0 pb-2">
+                {!hasSubMenu ? (
+                  <Link 
+                    href={itemPath}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-sm font-bold text-zinc-800 hover:text-green-600 tracking-wide uppercase p-3 block"
                   >
                     {item}
-                    <ChevronDown className={`w-4 h-4 transition-transform ${expandedMobileCategory === item ? 'rotate-180' : ''}`} />
-                  </button>
-                  
-                  {expandedMobileCategory === item && megaMenuData[item] && (
-                    <div className="pl-6 pb-2 pr-3 flex flex-col gap-3">
+                  </Link>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between">
                       <Link 
-                        href={`/category/${item.toLowerCase()}`}
+                        href={itemPath}
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="text-sm font-bold text-green-600 mb-2"
+                        className="text-sm font-bold text-zinc-800 hover:text-green-600 tracking-wide uppercase p-3 flex-1"
                       >
-                        Shop All {item} →
+                        {item}
                       </Link>
-                      
-                      {megaMenuData[item].brands?.length > 0 && (
-                        <div>
-                          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Brands</p>
-                          <div className="flex flex-col gap-2">
-                            {megaMenuData[item].brands.slice(0, 5).map((brand: any) => (
-                              <Link 
-                                key={brand.name}
-                                href={`/category/${item.toLowerCase()}?brand=${encodeURIComponent(brand.name)}`}
-                                onClick={() => setIsMobileMenuOpen(false)}
-                                className="text-sm text-gray-600"
-                              >
-                                {brand.name}
-                              </Link>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+                      <button 
+                        onClick={() => setExpandedMobileCategory(expandedMobileCategory === item ? null : item)}
+                        className="p-3 text-zinc-500 hover:text-green-600 focus:outline-none"
+                        aria-label={`Toggle ${item} dropdown`}
+                      >
+                        <ChevronDown className={`w-4 h-4 transition-transform ${expandedMobileCategory === item ? 'rotate-180' : ''}`} />
+                      </button>
                     </div>
-                  )}
-                </>
-              )}
-            </div>
-          ))}
+                    
+                    {expandedMobileCategory === item && megaMenuData[item] && (
+                      <div className="pl-6 pb-2 pr-3 flex flex-col gap-3">
+                        <Link 
+                          href={`/category/${item.toLowerCase()}`}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="text-sm font-bold text-green-600 mb-2 block"
+                        >
+                          Shop All {item} →
+                        </Link>
+                        
+                        {megaMenuData[item].brands?.length > 0 && (
+                          <div>
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Brands</p>
+                            <div className="flex flex-col gap-2">
+                              {megaMenuData[item].brands.slice(0, 5).map((brand: any) => (
+                                <Link 
+                                  key={brand.name}
+                                  href={`/category/${item.toLowerCase()}?brand=${encodeURIComponent(brand.name)}`}
+                                  onClick={() => setIsMobileMenuOpen(false)}
+                                  className="text-sm text-gray-600 hover:text-green-600"
+                                >
+                                  {brand.name}
+                                </Link>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          })}
           
           <div className="pt-4 mt-2 border-t border-gray-100 mb-8">
             <Link 

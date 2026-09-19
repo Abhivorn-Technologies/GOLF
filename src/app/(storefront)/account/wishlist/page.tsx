@@ -2,13 +2,15 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { HeartOff, ShoppingCart, Trash2 } from 'lucide-react';
-import AccountLogoutButton from "@/app/(storefront)/account/_components/AccountLogoutButton";
+import { HeartOff, ShoppingCart, Trash2, ArrowRight } from 'lucide-react';
 import AccountSidebar from "@/app/(storefront)/account/_components/AccountSidebar";
+import { useCart } from '@/context/CartContext';
+import toast from 'react-hot-toast';
 
 export default function WishlistPage() {
   const [wishlist, setWishlist] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { addToCart } = useCart();
 
   useEffect(() => {
     async function fetchWishlist() {
@@ -16,7 +18,7 @@ export default function WishlistPage() {
         const res = await fetch('/api/user/wishlist');
         const data = await res.json();
         if (res.ok) {
-          setWishlist(data.wishlist);
+          setWishlist(data.wishlist || []);
         }
       } catch (error) {
         console.error(error);
@@ -35,86 +37,127 @@ export default function WishlistPage() {
         body: JSON.stringify({ productId })
       });
       if (res.ok) {
-        const data = await res.json();
-        // The API returns the array of ObjectIds, but our UI expects populated objects.
-        // It's easier to just filter out the removed item locally:
-        setWishlist(wishlist.filter(item => item._id !== productId));
+        setWishlist(prev => prev.filter(item => (item._id || item.id) !== productId));
+        toast.success("Item removed from wishlist");
       } else {
-        alert("Could not update wishlist. Local DB may be blocked.");
+        toast.error("Could not update wishlist");
       }
     } catch (e) {
-      alert("Error updating wishlist");
+      toast.error("Error updating wishlist");
     }
   };
 
+  const handleMoveToCart = (product: any) => {
+    const formattedProduct = {
+      id: product._id || product.id,
+      title: product.title,
+      price: product.price,
+      images: product.images || [],
+      category: product.category,
+      brand: product.brand,
+    };
+    addToCart(formattedProduct as any, 1);
+    toast.success("Item moved to cart!");
+  };
+
   return (
-    <div className="bg-[#f4f4f5]">
-      <div className="w-full px-4 md:px-8 pt-8 flex justify-end">
-        <AccountLogoutButton />
-      </div>
-      
-      <div className="w-full px-4 md:px-8 py-8 flex flex-col md:flex-row gap-8 md:gap-16 items-start">
-        <AccountSidebar />
+    <div className="bg-[#fafafa] min-h-screen py-8 md:py-12 font-sans">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col md:flex-row gap-8 items-start">
+          
+          <AccountSidebar />
 
-        <div className="flex-1 w-full max-w-4xl">
-          <h2 className="text-3xl font-black text-black uppercase tracking-tighter mb-8">
-            My Wishlist
-          </h2>
-
-          {loading ? (
-            <div className="flex flex-col items-center justify-center p-20 text-gray-400 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
-              <div className="w-8 h-8 border-4 border-gray-200 border-t-black rounded-full animate-spin mb-4"></div>
-              <p className="font-semibold text-sm">Loading wishlist...</p>
-            </div>
-          ) : wishlist.length === 0 ? (
-            <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-16 text-center flex flex-col items-center">
-              <HeartOff className="w-16 h-16 text-gray-300 mb-6" strokeWidth={1.5} />
-              <h3 className="text-xl font-black text-black mb-2 uppercase tracking-tighter">Your wishlist is empty</h3>
-              <p className="font-medium text-gray-500 text-sm mb-8 max-w-md">
-                Looks like you haven't saved any items yet. Find something you love and click the heart icon!
-              </p>
-              <Link href="/" className="inline-block bg-black text-white px-8 py-3.5 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-gray-800 transition-all shadow-md">
-                Explore Products
-              </Link>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {wishlist.map((product) => (
-                <div key={product._id} className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden flex flex-col transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] group">
-                  
-                  <div className="h-48 bg-gray-50 relative p-4 flex items-center justify-center">
-                    <img src={product.images?.[0] || "/images/golf.png"} alt={product.title} className="w-full h-full object-contain mix-blend-multiply" />
-                    <button 
-                      onClick={() => handleRemove(product._id)}
-                      className="absolute top-3 right-3 bg-white p-2 rounded-full shadow-md text-gray-400 hover:text-red-500 transition-colors"
-                      title="Remove from wishlist"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                  
-                  <div className="p-5 flex flex-col flex-1">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">
-                      {product.brand || 'Premium'}
-                    </span>
-                    <h3 className="text-base font-black leading-tight text-black mb-2 line-clamp-2">
-                      {product.title}
-                    </h3>
-                    <div className="mt-auto">
-                      <span className="text-lg font-black text-black mb-4 block">
-                        ₹{product.price?.toLocaleString()}
-                      </span>
-                      <button className="w-full flex items-center justify-center gap-2 bg-black text-white px-4 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-gray-800 transition-colors">
-                        <ShoppingCart className="w-4 h-4" /> Move to Cart
-                      </button>
-                    </div>
-                  </div>
+          <div className="flex-1 w-full">
+            <div className="bg-white rounded-2xl p-6 sm:p-8 border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-5 mb-8">
+                <div>
+                  <h1 className="text-2xl sm:text-3xl font-black text-zinc-900 tracking-tight">My Wishlist</h1>
+                  <p className="text-sm text-zinc-500 mt-1">Saved items you love and wish to purchase</p>
                 </div>
-              ))}
+                {wishlist.length > 0 && (
+                  <span className="bg-zinc-100 text-zinc-800 text-xs font-bold px-3 py-1.5 rounded-full">
+                    {wishlist.length} {wishlist.length === 1 ? 'item' : 'items'}
+                  </span>
+                )}
+              </div>
+
+              {loading ? (
+                <div className="flex flex-col items-center justify-center py-20 text-zinc-400">
+                  <div className="w-8 h-8 border-4 border-zinc-200 border-t-zinc-900 rounded-full animate-spin mb-4"></div>
+                  <p className="font-semibold text-sm">Loading your wishlist...</p>
+                </div>
+              ) : wishlist.length === 0 ? (
+                <div className="py-16 text-center flex flex-col items-center">
+                  <div className="w-16 h-16 rounded-full bg-rose-50 flex items-center justify-center text-rose-500 mb-5">
+                    <HeartOff className="w-8 h-8" strokeWidth={1.5} />
+                  </div>
+                  <h3 className="text-xl font-bold text-zinc-900 mb-2">Your wishlist is empty</h3>
+                  <p className="font-medium text-zinc-500 text-sm mb-8 max-w-md">
+                    Explore our golf collection and click the heart icon to save products to your account.
+                  </p>
+                  <Link 
+                    href="/products" 
+                    className="inline-flex items-center gap-2 bg-zinc-900 text-white px-7 py-3 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-zinc-800 transition-all shadow-md"
+                  >
+                    <span>Browse Products</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {wishlist.map((product) => {
+                    const prodId = product._id || product.id;
+                    return (
+                      <div key={prodId} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col transition-all hover:shadow-md group">
+                        
+                        <div className="h-52 bg-zinc-50 relative p-4 flex items-center justify-center border-b border-gray-50">
+                          <img 
+                            src={product.images?.[0] || "/images/golf.png"} 
+                            alt={product.title} 
+                            className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300" 
+                          />
+                          <button 
+                            onClick={() => handleRemove(prodId)}
+                            className="absolute top-3 right-3 bg-white p-2 rounded-full shadow-md text-zinc-400 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+                            title="Remove from wishlist"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                        
+                        <div className="p-5 flex flex-col flex-1">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 mb-1">
+                            {product.brand || 'Golf Equipment'}
+                          </span>
+                          <Link href={`/product/${prodId}`} className="hover:underline">
+                            <h3 className="text-sm font-bold leading-tight text-zinc-900 mb-2 line-clamp-2 min-h-[2.5rem]">
+                              {product.title}
+                            </h3>
+                          </Link>
+                          <div className="mt-auto pt-3 border-t border-gray-100 flex flex-col gap-3">
+                            <span className="text-lg font-extrabold text-zinc-900">
+                              ₹{typeof product.price === 'number' ? product.price.toLocaleString('en-IN') : product.price}
+                            </span>
+                            <button 
+                              onClick={() => handleMoveToCart(product)}
+                              className="w-full flex items-center justify-center gap-2 bg-zinc-900 text-white px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-zinc-800 transition-colors shadow-sm"
+                            >
+                              <ShoppingCart className="w-4 h-4" /> 
+                              <span>Move to Cart</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          )}
+          </div>
+
         </div>
       </div>
     </div>
   );
 }
+

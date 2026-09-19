@@ -11,6 +11,17 @@ interface Brand {
   image?: string;
 }
 
+function resolveImgSrc(src?: string) {
+  if (!src || typeof src !== 'string' || src.trim() === '' || src === '/placeholder.png' || src === 'placeholder.png' || src === 'null' || src === 'undefined') {
+    return '/images/golf.png';
+  }
+  const clean = src.trim();
+  if (clean.startsWith('data:') || clean.startsWith('http://') || clean.startsWith('https://') || clean.startsWith('/')) {
+    return clean;
+  }
+  return `/images/${clean}`;
+}
+
 export default function BestBrandsCarousel({ brands = [] }: { brands?: Brand[] }) {
   // Fallback to defaults if not configured
   const displayBrands = brands.length > 0 ? brands : [
@@ -34,10 +45,15 @@ export default function BestBrandsCarousel({ brands = [] }: { brands?: Brand[] }
           const targetHref = isValidUrl ? brand.link : `?brand=${encodeURIComponent(brand.name)}`;
           return (
           <Link key={brand.id} href={targetHref} scroll={false} className="flex-1 flex flex-col group cursor-pointer">
-            <div className={`w-full h-[310px] rounded-xl bg-gradient-to-br ${brand.color} mb-4 relative overflow-hidden transition-transform duration-300 group-hover:scale-[1.02] border border-gray-100`}>
+            <div className={`w-full h-[310px] rounded-xl bg-gradient-to-br ${brand.color || 'from-gray-100 to-gray-200'} mb-4 relative overflow-hidden transition-transform duration-300 group-hover:scale-[1.02] border border-gray-100`}>
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors"></div>
               {brand.image ? (
-                <img src={brand.image} alt={brand.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <img 
+                  src={resolveImgSrc(brand.image)} 
+                  alt={brand.name} 
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/images/golf.png'; }}
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center text-gray-400 font-serif italic text-sm">
                   {brand.name} Image

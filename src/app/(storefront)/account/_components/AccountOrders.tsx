@@ -2,12 +2,19 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { PackageOpen, X, Star } from 'lucide-react';
+import { Package, PackageOpen, X, Star, ChevronRight, Truck, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+
+function resolveImg(src?: string) {
+  if (!src || src === '/placeholder.png' || src === 'undefined' || src === 'null') return '/images/golf.png';
+  if (src.startsWith('data:') || src.startsWith('http') || src.startsWith('/')) return src;
+  return `/images/${src}`;
+}
 
 export default function AccountOrders() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<'all' | 'processing' | 'delivered' | 'cancelled'>('all');
 
   // Modal State
   const [modalType, setModalType] = useState<'cancel' | 'return' | 'feedback' | null>(null);
@@ -64,14 +71,14 @@ export default function AccountOrders() {
           action: modalType,
           reason: reason.trim(),
           rating,
-          comment: reason.trim() // using reason as comment for feedback
+          comment: reason.trim()
         })
       });
 
       const data = await res.json();
       if (res.ok) {
         toast.success(data.message);
-        fetchOrders(); // Refresh orders
+        fetchOrders();
         closeModal();
       } else {
         toast.error(data.error || 'Something went wrong');
@@ -83,193 +90,250 @@ export default function AccountOrders() {
     }
   };
 
+  const filteredOrders = orders.filter((order) => {
+    if (filter === 'processing') return order.shippingStatus === 'processing' || order.shippingStatus === 'shipped';
+    if (filter === 'delivered') return order.shippingStatus === 'delivered';
+    if (filter === 'cancelled') return order.shippingStatus === 'cancelled';
+    return true;
+  });
+
+  const getStatusBadge = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'delivered':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <CheckCircle2 className="w-3.5 h-3.5" /> Delivered
+          </span>
+        );
+      case 'shipped':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+            <Truck className="w-3.5 h-3.5" /> Shipped
+          </span>
+        );
+      case 'cancelled':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+            <AlertCircle className="w-3.5 h-3.5" /> Cancelled
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+            <Clock className="w-3.5 h-3.5" /> Processing
+          </span>
+        );
+    }
+  };
+
   return (
-    <div className="w-full relative">
-      <h2 className="text-3xl font-black text-black uppercase tracking-tighter mb-8">
-        My Orders
-      </h2>
+    <div className="w-full font-sans space-y-6">
+      
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+        <div>
+          <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">Order History</h1>
+          <p className="text-zinc-500 text-sm mt-0.5">Track your orders, view receipts, and manage returns</p>
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="flex items-center gap-1.5 bg-zinc-100 p-1 rounded-xl shrink-0 overflow-x-auto">
+          {(['all', 'processing', 'delivered', 'cancelled'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setFilter(tab)}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold capitalize transition-all whitespace-nowrap ${
+                filter === tab 
+                  ? 'bg-white text-zinc-900 shadow-sm' 
+                  : 'text-zinc-500 hover:text-zinc-900'
+              }`}
+            >
+              {tab === 'all' ? 'All Orders' : tab}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center p-20 text-gray-400 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
-          <div className="w-8 h-8 border-4 border-gray-200 border-t-black rounded-full animate-spin mb-4"></div>
-          <p className="font-semibold text-sm">Loading your orders...</p>
+        <div className="bg-white rounded-2xl p-16 border border-gray-100 text-center shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+          <div className="w-8 h-8 border-4 border-zinc-200 border-t-zinc-900 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-zinc-500 text-sm font-medium">Loading your orders...</p>
         </div>
-      ) : orders.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-10 text-center flex flex-col items-center">
-          <PackageOpen className="w-16 h-16 text-gray-300 mb-6" strokeWidth={1.5} />
-          <h3 className="text-xl font-black text-black mb-2 uppercase tracking-tighter">No Orders Yet</h3>
-          <p className="font-medium text-gray-500 text-sm mb-8 max-w-md">
-            Looks like you haven't placed any orders with us yet. Start shopping to fill this space!
+      ) : filteredOrders.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col items-center">
+          <div className="w-16 h-16 bg-zinc-50 rounded-full flex items-center justify-center mb-4">
+            <PackageOpen className="w-8 h-8 text-zinc-400" strokeWidth={1.5} />
+          </div>
+          <h3 className="text-lg font-bold text-zinc-900 mb-1">No Orders Found</h3>
+          <p className="text-zinc-500 text-sm mb-6 max-w-sm">
+            {filter === 'all' 
+              ? "You haven't placed any orders yet. Explore our latest golf collections!"
+              : `No orders matching status "${filter}".`}
           </p>
-          <Link href="/" className="inline-block bg-black text-white px-8 py-3.5 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-gray-800 transition-all shadow-md">
-            Start Shopping
+          <Link href="/" className="bg-zinc-900 hover:bg-black text-white px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors">
+            Browse Store
           </Link>
         </div>
       ) : (
-        <div className="flex flex-col gap-8">
-          {orders.map((order: any) => (
-            <div key={order._id} className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden flex flex-col transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+        <div className="space-y-6">
+          {filteredOrders.map((order: any) => (
+            <div key={order._id} className="bg-white rounded-2xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden transition-all hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)]">
               
-              {/* Order Header */}
-              <div className="bg-gray-50 border-b border-gray-100 py-3 px-5 sm:px-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div className="flex flex-wrap gap-6 sm:gap-10">
-                  <div className="flex flex-col gap-1">
-                    <span className="font-bold text-gray-500 text-[10px] uppercase tracking-widest">
-                      Order Placed
-                    </span>
-                    <span className="font-semibold text-black text-sm">
-                      {new Date(order.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+              {/* Order Header Bar */}
+              <div className="bg-zinc-50/70 px-6 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-4">
+                <div className="flex flex-wrap items-center gap-6 text-xs">
+                  <div>
+                    <span className="text-zinc-400 font-medium block uppercase tracking-wider text-[10px]">Date Placed</span>
+                    <span className="font-semibold text-zinc-900 mt-0.5 block">
+                      {new Date(order.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
                     </span>
                   </div>
 
-                  <div className="flex flex-col gap-1">
-                    <span className="font-bold text-gray-500 text-[10px] uppercase tracking-widest">
-                      Total Amount
-                    </span>
-                    <span className="font-semibold text-black text-sm">
+                  <div>
+                    <span className="text-zinc-400 font-medium block uppercase tracking-wider text-[10px]">Total Amount</span>
+                    <span className="font-bold text-zinc-900 mt-0.5 block text-sm">
                       ₹{order.totalAmount?.toLocaleString()}
                     </span>
                   </div>
 
-                  <div className="flex flex-col gap-1">
-                    <span className="font-bold text-gray-500 text-[10px] uppercase tracking-widest">
-                      Ship To
-                    </span>
-                    <span className="font-semibold text-black text-sm hover:underline cursor-pointer">
+                  <div>
+                    <span className="text-zinc-400 font-medium block uppercase tracking-wider text-[10px]">Ship To</span>
+                    <span className="font-medium text-zinc-800 mt-0.5 block truncate max-w-[150px]">
                       {order.shippingAddress?.name || 'Customer'}
                     </span>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-1 sm:items-end w-full sm:w-auto">
-                  <span className="font-bold text-gray-500 text-[10px] uppercase tracking-widest">
-                    Order ID
-                  </span>
-                  <Link href={`/account/orders/${order._id}`} className="font-bold text-black text-sm hover:underline flex items-center gap-1">
-                    #{order._id.slice(-8).toUpperCase()} <span className="text-gray-400">&rarr;</span>
+                <div className="flex items-center gap-3">
+                  {order.returnStatus === 'refunded' || (order.shippingStatus === 'cancelled' && Number(order.refundAmount) > 0) ? (
+                    <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                      Refunded ₹{Number(order.refundAmount).toLocaleString('en-IN')}
+                    </span>
+                  ) : order.returnStatus === 'approved' ? (
+                    <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-blue-50 text-blue-800 border border-blue-200">
+                      Return Approved - Refund Processing
+                    </span>
+                  ) : order.returnStatus === 'requested' ? (
+                    <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                      Return Requested
+                    </span>
+                  ) : order.shippingStatus === 'cancelled' && order.paymentStatus === 'paid' ? (
+                    <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                      Refund Pending
+                    </span>
+                  ) : null}
+                  {getStatusBadge(order.shippingStatus)}
+                  <Link 
+                    href={`/account/orders/${order._id}`} 
+                    className="text-xs font-bold text-zinc-700 hover:text-black flex items-center gap-1 bg-white px-3 py-1.5 rounded-lg border border-gray-200 transition-colors shadow-2xs"
+                  >
+                    #{order._id.slice(-8).toUpperCase()}
+                    <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
                   </Link>
                 </div>
               </div>
 
-              {/* Order Body */}
-              <div className="p-5 sm:p-6 flex flex-col lg:flex-row gap-6 items-start justify-between">
+              {/* Order Products List */}
+              <div className="p-6 flex flex-col md:flex-row gap-6 items-start justify-between">
                 
-                <div className="flex flex-col gap-5 flex-1 w-full">
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                      <div className="inline-block px-3 py-1 bg-black text-white text-[10px] font-bold uppercase tracking-widest rounded-full">
-                        {order.shippingStatus || 'Processing'}
-                      </div>
-                      
-                      {order.returnStatus && order.returnStatus !== 'none' && (
-                         <div className="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 border border-yellow-200 text-[10px] font-bold uppercase tracking-widest rounded-full">
-                          Return {order.returnStatus}
-                        </div>
-                      )}
-                    </div>
+                <div className="flex-1 space-y-4 w-full">
+                  {order.products?.map((item: any, idx: number) => {
+                    const prodName = typeof item.product === 'object' ? (item.product?.title || item.product?.name) : (item.title || item.name || 'Golf Equipment');
+                    const rawImage = typeof item.product === 'object' 
+                      ? (item.product?.image || (Array.isArray(item.product?.images) ? item.product.images[0] : null))
+                      : (item.image || (Array.isArray(item.images) ? item.images[0] : null));
                     
-                    {order.trackingId && (
-                      <div className="text-xs text-gray-500 mt-2">
-                        <span className="font-bold text-gray-700">Courier:</span> {order.courierName || 'Standard Shipping'} <br/>
-                        <span className="font-bold text-gray-700">Tracking ID:</span> {order.trackingId} <br/>
-                        <span className="font-bold text-gray-700">Est. Delivery:</span> {order.estimatedDelivery ? new Date(order.estimatedDelivery).toLocaleDateString() : 'TBD'}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col gap-6 w-full">
-                    {order.products?.map((item: any, idx: number) => {
-                      const prodName = item.product?.name || item.product?.title || 'Unknown Product';
-                      const prodImage = item.product?.image || (item.product?.images && item.product.images[0]) || '/placeholder.png';
-                      
-                      return (
-                      <div key={idx} className="flex gap-4 sm:gap-6 items-center">
-                        <Link href={`/product/${item.product?.slug || item.product?._id}`} className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-50 rounded-xl flex items-center justify-center p-2 sm:p-3 shrink-0 border border-gray-100 hover:border-black transition-colors">
-                          <img src={prodImage.startsWith('http') ? prodImage : `/images/${prodImage}`} alt={prodName} className="w-full h-full object-contain mix-blend-multiply" />
+                    return (
+                      <div key={idx} className="flex items-center gap-4">
+                        <Link href={`/product/${item.product?.slug || item.product?._id || ''}`} className="w-16 h-16 bg-zinc-50 rounded-xl flex items-center justify-center p-2 shrink-0 border border-gray-100 hover:border-zinc-300 transition-colors overflow-hidden">
+                          <img 
+                            src={resolveImg(rawImage)} 
+                            alt={prodName} 
+                            onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/images/golf.png'; }}
+                            className="w-full h-full object-contain mix-blend-multiply" 
+                          />
                         </Link>
                         
-                        <div className="flex flex-col gap-1 sm:gap-1.5 flex-1">
-                          <Link href={`/product/${item.product?.slug || item.product?._id}`} className="text-black text-base sm:text-lg font-black tracking-tight leading-tight hover:underline hover:text-green-800">
+                        <div className="flex-1 min-w-0">
+                          <Link href={`/product/${item.product?.slug || item.product?._id}`} className="font-bold text-zinc-900 text-sm hover:text-emerald-700 transition-colors line-clamp-1">
                             {prodName}
                           </Link>
-                          
-                          <span className="font-medium text-gray-500 text-sm">
-                            Qty: {item.quantity}
-                          </span>
+                          <div className="flex items-center gap-3 text-xs text-zinc-500 mt-1">
+                            <span>Qty: <strong>{item.quantity}</strong></span>
+                            <span>•</span>
+                            <span>Price: <strong>₹{item.priceAtPurchase?.toLocaleString() || 'N/A'}</strong></span>
+                          </div>
 
                           {item.variants && Object.keys(item.variants).length > 0 && (
-                            <div className="text-xs text-gray-500 flex gap-2">
-                              {Object.entries(item.variants).map(([k,v]) => (
-                                <span key={k} className="bg-gray-100 px-2 py-1 rounded">{k}: {v as string}</span>
-                              ))}
+                            <div className="flex flex-wrap gap-1.5 mt-1.5">
+                              {Object.entries(item.variants)
+                                .filter(([k]) => k !== 'variantId')
+                                .map(([k, v]) => (
+                                  <span key={k} className="text-[10px] font-semibold bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-md">
+                                    {k}: {v as string}
+                                  </span>
+                                ))}
                             </div>
                           )}
                         </div>
                       </div>
-                    )})}
-                  </div>
+                    );
+                  })}
                 </div>
 
-                {/* Order Actions */}
-                <div className="flex flex-col gap-3 w-full lg:w-auto shrink-0 lg:min-w-[220px]">
-                  
+                {/* Order Action Buttons */}
+                <div className="w-full md:w-48 shrink-0 flex flex-col gap-2 pt-4 md:pt-0 border-t md:border-t-0 border-gray-100">
                   <Link 
                     href={`/account/orders/${order._id}`}
-                    className="w-full bg-black text-white rounded-xl py-3 px-6 font-bold text-xs uppercase tracking-widest hover:bg-gray-800 transition-all shadow-md text-center"
+                    className="w-full bg-zinc-900 hover:bg-black text-white rounded-xl py-2.5 px-4 font-bold text-xs uppercase tracking-wider text-center transition-colors shadow-xs"
                   >
-                    View Details
+                    View Order Details
                   </Link>
-
-                  {order.shippingStatus === 'shipped' && (
-                    <button 
-                      onClick={() => order.trackingId ? alert(`Redirecting to ${order.courierName} tracking page for AWB: ${order.trackingId}`) : alert('Tracking not generated yet')}
-                      className="w-full bg-black text-white rounded-xl py-3 px-6 font-bold text-xs uppercase tracking-widest hover:bg-gray-800 transition-all shadow-md text-center"
-                    >
-                      Track Package
-                    </button>
-                  )}
 
                   {order.shippingStatus === 'processing' && (
                     <button 
                       onClick={() => openModal('cancel', order)}
-                      className="w-full bg-white border border-gray-200 text-black rounded-xl py-3 px-6 font-bold text-xs uppercase tracking-widest hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors text-center"
+                      className="w-full bg-white border border-rose-200 text-rose-600 rounded-xl py-2.5 px-4 font-bold text-xs uppercase tracking-wider hover:bg-rose-50 transition-colors text-center"
                     >
                       Cancel Order
                     </button>
                   )}
 
-                  {order.shippingStatus === 'delivered' && order.returnStatus === 'none' && (
-                    <button 
-                      onClick={() => openModal('return', order)}
-                      className="w-full bg-white border border-gray-200 text-black rounded-xl py-3 px-6 font-bold text-xs uppercase tracking-widest hover:bg-gray-50 transition-colors text-center"
-                    >
-                      Return Items
-                    </button>
-                  )}
+                  {order.shippingStatus === 'delivered' && (order.returnStatus === 'none' || !order.returnStatus) && (() => {
+                    const deliveredTime = new Date(order.updatedAt || order.createdAt).getTime();
+                    const returnWindowMs = 7 * 24 * 60 * 60 * 1000;
+                    const isWithin7Days = (Date.now() - deliveredTime) <= returnWindowMs;
+
+                    if (isWithin7Days) {
+                      return (
+                        <button 
+                          onClick={() => openModal('return', order)}
+                          className="w-full bg-white border border-gray-200 text-zinc-800 rounded-xl py-2.5 px-4 font-bold text-xs uppercase tracking-wider hover:bg-zinc-50 transition-colors text-center"
+                        >
+                          Request Return
+                        </button>
+                      );
+                    }
+
+                    return (
+                      <span className="text-[11px] text-zinc-400 font-medium text-center py-1 italic">
+                        Return period expired (7-day policy)
+                      </span>
+                    );
+                  })()}
 
                   {order.shippingStatus === 'delivered' && !order.feedback?.rating && (
                     <button 
                       onClick={() => openModal('feedback', order)}
-                      className="w-full bg-white border border-gray-200 text-black rounded-xl py-3 px-6 font-bold text-xs uppercase tracking-widest hover:bg-gray-50 transition-colors text-center"
+                      className="w-full bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl py-2.5 px-4 font-bold text-xs uppercase tracking-wider hover:bg-emerald-100 transition-colors text-center flex items-center justify-center gap-1.5"
                     >
-                      Seller Feedback
+                      <Star className="w-3.5 h-3.5 fill-emerald-600 text-emerald-600" /> Leave Feedback
                     </button>
-                  )}
-                  
-                  {order.feedback?.rating && (
-                    <div className="w-full bg-gray-50 border border-gray-100 rounded-xl py-3 px-6 flex flex-col items-center justify-center gap-1">
-                       <span className="font-bold text-[10px] text-gray-500 uppercase tracking-widest">You Rated</span>
-                       <div className="flex text-yellow-500 gap-0.5">
-                         {[...Array(5)].map((_, i) => (
-                            <Star key={i} className={`w-3 h-3 ${i < order.feedback.rating ? 'fill-yellow-500' : 'text-gray-300 fill-gray-300'}`} />
-                         ))}
-                       </div>
-                    </div>
                   )}
                 </div>
 
               </div>
-              
+
             </div>
           ))}
         </div>
@@ -277,40 +341,40 @@ export default function AccountOrders() {
 
       {/* Action Modal */}
       {modalType && selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-[24px] w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-gray-50/50">
-              <h3 className="font-black text-xl tracking-tight uppercase">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center p-5 border-b border-gray-100 bg-zinc-50">
+              <h3 className="font-bold text-zinc-900 text-base">
                 {modalType === 'cancel' && 'Cancel Order'}
                 {modalType === 'return' && 'Request Return'}
                 {modalType === 'feedback' && 'Leave Feedback'}
               </h3>
-              <button onClick={closeModal} className="text-gray-400 hover:text-black transition-colors bg-white p-2 rounded-full shadow-sm">
+              <button onClick={closeModal} className="text-zinc-400 hover:text-zinc-900 transition-colors p-1.5 bg-white rounded-full border border-gray-200 shadow-2xs">
                 <X className="w-4 h-4" />
               </button>
             </div>
             
-            <div className="p-6 flex flex-col gap-6">
+            <div className="p-6 space-y-5">
               {modalType === 'feedback' && (
-                <div className="flex flex-col gap-3">
-                  <label className="text-xs font-bold uppercase tracking-widest text-gray-500">Rate your experience</label>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2">Rating</label>
                   <div className="flex gap-2">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button 
                         key={star} 
                         onClick={() => setRating(star)}
-                        className={`transition-colors ${star <= rating ? 'text-yellow-500' : 'text-gray-200'}`}
+                        className="transition-transform hover:scale-110 focus:outline-none"
                       >
-                        <Star className={`w-8 h-8 ${star <= rating ? 'fill-yellow-500' : ''}`} />
+                        <Star className={`w-8 h-8 ${star <= rating ? 'fill-amber-400 text-amber-400' : 'text-zinc-200'}`} />
                       </button>
                     ))}
                   </div>
                 </div>
               )}
 
-              <div className="flex flex-col gap-3">
-                <label className="text-xs font-bold uppercase tracking-widest text-gray-500">
-                  {modalType === 'feedback' ? 'Add a comment (Optional)' : 'Reason required'}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2">
+                  {modalType === 'feedback' ? 'Comments (Optional)' : 'Reason'}
                 </label>
                 <textarea 
                   value={reason}
@@ -318,31 +382,27 @@ export default function AccountOrders() {
                   placeholder={
                     modalType === 'cancel' ? 'Why are you cancelling?' :
                     modalType === 'return' ? 'Why are you returning these items?' :
-                    'Tell us what you liked or didn\'t like...'
+                    'Tell us about your experience...'
                   }
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm outline-none focus:border-black focus:ring-1 focus:ring-black transition-all min-h-[120px] resize-none"
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl p-3.5 text-sm text-zinc-900 outline-none focus:bg-white focus:border-zinc-900 transition-all min-h-[100px] resize-none"
                 />
               </div>
             </div>
 
-            <div className="p-6 bg-gray-50 border-t border-gray-100 flex gap-4">
+            <div className="p-5 bg-zinc-50 border-t border-gray-100 flex gap-3">
               <button 
                 onClick={closeModal}
                 disabled={actionLoading}
-                className="flex-1 px-6 py-3.5 bg-white border border-gray-200 text-black font-bold uppercase tracking-widest text-xs rounded-xl hover:bg-gray-50 transition-colors"
+                className="flex-1 px-4 py-3 bg-white border border-gray-200 text-zinc-700 font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-zinc-100 transition-colors"
               >
-                Go Back
+                Close
               </button>
               <button 
                 onClick={submitAction}
                 disabled={actionLoading}
-                className="flex-1 px-6 py-3.5 bg-black text-white font-bold uppercase tracking-widest text-xs rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                className="flex-1 px-4 py-3 bg-zinc-900 text-white font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-black transition-colors disabled:opacity-50 flex items-center justify-center"
               >
-                {actionLoading ? (
-                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                ) : (
-                  'Submit'
-                )}
+                {actionLoading ? 'Submitting...' : 'Confirm'}
               </button>
             </div>
           </div>

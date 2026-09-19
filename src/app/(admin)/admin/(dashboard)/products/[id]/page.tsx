@@ -4,6 +4,9 @@ import dbConnect from '@/lib/mongodb';
 import Product from '@/models/Product';
 import { notFound } from 'next/navigation';
 
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
+
 export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   
@@ -20,9 +23,18 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
 
   return (
     <div className="w-full space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Edit Product</h1>
-        <p className="text-gray-500 mt-1">Update product details and inventory.</p>
+      <div className="flex items-center gap-4">
+        <Link 
+          href="/admin/products" 
+          className="p-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 transition-colors shadow-sm flex items-center justify-center"
+          title="Back to Products"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </Link>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Edit Product</h1>
+          <p className="text-gray-500 mt-1">Update product details and inventory.</p>
+        </div>
       </div>
 
       <ProductForm initialData={serializedProduct} />

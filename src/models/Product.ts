@@ -21,14 +21,23 @@ const ProductSchema = new mongoose.Schema({
     key: { type: String },
     value: { type: String }
   }],
+  variants: [{
+    id: { type: String, required: true },
+    color: { type: String },
+    colorCode: { type: String },
+    size: { type: String },
+    stockCount: { type: Number, default: 0 },
+    images: [{ type: String }]
+  }],
   isFeatured: { type: Boolean, default: false },
   isTopDeal: { type: Boolean, default: false },
   isNewArrival: { type: Boolean, default: false }
 }, { timestamps: true });
 
-// Clear mongoose model in development to prevent strict schema caching issues on hot reload
-if (process.env.NODE_ENV !== 'production' && mongoose.models.Product) {
-  delete mongoose.models.Product;
-}
+ProductSchema.index({ isTopDeal: 1 });
+ProductSchema.index({ isNewArrival: 1, inStock: 1, createdAt: -1 });
+ProductSchema.index({ isFeatured: 1, createdAt: -1 });
+ProductSchema.index({ category: 1 });
+ProductSchema.index({ brand: 1 });
 
 export default mongoose.models.Product || mongoose.model('Product', ProductSchema);

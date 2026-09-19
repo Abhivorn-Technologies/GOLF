@@ -37,9 +37,4 @@ const PageSettingsSchema = new mongoose.Schema({
   utilityBar: UtilityBarSchema // For global utility bar settings
 }, { timestamps: true });
 
-// Clear mongoose model in development to prevent strict schema caching issues on hot reload
-if (process.env.NODE_ENV !== 'production' && mongoose.models.PageSettings) {
-  delete mongoose.models.PageSettings;
-}
-
 export default mongoose.models.PageSettings || mongoose.model('PageSettings', PageSettingsSchema);

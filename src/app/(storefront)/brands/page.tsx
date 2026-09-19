@@ -2,8 +2,13 @@ import React from 'react';
 import Link from 'next/link';
 import dbConnect from '@/lib/mongodb';
 import Brand from '@/models/Brand';
-import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
+
+function resolveImg(src: string) {
+  if (!src) return '/images/golf.png';
+  if (src.startsWith('data:') || src.startsWith('http') || src.startsWith('/')) return src;
+  return `/images/${src}`;
+}
 
 export default async function BrandsPage() {
   let brands: any[] = [];
@@ -41,11 +46,10 @@ export default async function BrandsPage() {
                 className="group bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-100 overflow-hidden flex flex-col items-center justify-center p-6 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all h-[200px]"
               >
                 <div className="w-full h-[100px] relative mb-4 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-                  <Image 
-                    src={brand.imageUrl} 
+                  <img 
+                    src={resolveImg(brand.imageUrl || '')} 
                     alt={brand.name} 
-                    fill
-                    className="object-contain p-2 grayscale group-hover:grayscale-0 transition-all duration-300"
+                    className="w-full h-full object-contain p-2 grayscale group-hover:grayscale-0 transition-all duration-300"
                   />
                 </div>
                 <div className="flex items-center text-[10px] font-bold uppercase tracking-widest text-gray-400 group-hover:text-green-600 transition-colors">

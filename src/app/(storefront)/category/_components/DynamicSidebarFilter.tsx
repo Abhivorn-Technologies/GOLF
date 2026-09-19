@@ -224,9 +224,23 @@ export default function DynamicSidebarFilter({ filterData, allowedAttributes }: 
 
       {/* On Sale Filter */}
       <div>
-        <button type="button" className="flex items-center gap-[12px] cursor-pointer group w-full text-left" onClick={() => handleToggle('sale', 'true', true)} suppressHydrationWarning>
-          <div className={`w-[20px] h-[20px] rounded-[4px] border flex items-center justify-center transition-colors ${isSelected('sale', 'true') ? 'bg-[#006747] border-[#006747]' : 'border-[#717b71] group-hover:border-[#006747]'}`}>
-            {isSelected('sale', 'true') && (
+        <button 
+          type="button" 
+          className="flex items-center gap-[12px] cursor-pointer group w-full text-left" 
+          onClick={() => {
+            const params = new URLSearchParams(searchParams.toString());
+            if (params.has('sale')) {
+              params.delete('sale');
+            } else {
+              params.set('sale', 'true');
+            }
+            const newQs = params.toString();
+            router.push(pathname + (newQs ? `?${newQs}` : ''), { scroll: false });
+          }} 
+          suppressHydrationWarning
+        >
+          <div className={`w-[20px] h-[20px] rounded-[4px] border flex items-center justify-center transition-colors ${searchParams.has('sale') ? 'bg-[#006747] border-[#006747]' : 'border-[#717b71] group-hover:border-[#006747]'}`}>
+            {searchParams.has('sale') && (
               <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>

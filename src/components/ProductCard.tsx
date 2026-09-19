@@ -1,5 +1,8 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
+import WishlistButton from '@/components/WishlistButton';
 
 export default function ProductCard({ product }: { product: any }) {
   let discountBadge = null;
@@ -12,6 +15,8 @@ export default function ProductCard({ product }: { product: any }) {
 
   return (
     <div className="bg-white border border-gray-100 rounded-[16px] p-[16px] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300 group cursor-pointer flex flex-col h-full relative overflow-hidden">
+      <WishlistButton productId={product._id || product.id} />
+      
       {/* Sale Badge */}
       {discountBadge && (
         <div className="absolute top-6 left-6 bg-red-600 text-white text-[10px] font-bold px-3 py-1 rounded-sm uppercase tracking-wider shadow-sm z-10">
@@ -23,16 +28,18 @@ export default function ProductCard({ product }: { product: any }) {
       <Link href={`/product/${product.slug || product.id}`} className="w-full aspect-[4/3] bg-gray-50/50 rounded-[12px] mb-[24px] overflow-hidden relative flex items-center justify-center block">
         {/* Fallback styling when image is missing */}
         <div className="w-full h-full flex items-center justify-center">
-          {product.image && product.image !== 'placeholder.png' ? (
-            <img 
-              src={product.image.startsWith('http') || product.image.startsWith('/') ? product.image : `/images/${product.image}`} 
-              alt={product.name} 
-              onError={(e) => { (e.target as HTMLImageElement).src = '/images/placeholder.png' }}
-              className="w-full h-full object-contain p-4 mix-blend-multiply opacity-95 group-hover:scale-110 transition-transform duration-700 ease-out" 
-            />
-          ) : (
-            <span className="text-gray-400 font-serif italic text-center px-4">{product.name} Image</span>
-          )}
+          {(() => {
+            const rawImg = product.image || (Array.isArray(product.images) ? product.images[0] : null) || '';
+            const imgSrc = !rawImg ? '/images/golf.png' : (rawImg.startsWith('http') || rawImg.startsWith('data:') || rawImg.startsWith('/') ? rawImg : `/images/${rawImg}`);
+            return (
+              <img 
+                src={imgSrc} 
+                alt={product.name || product.title || 'Product'} 
+                onError={(e) => { (e.target as HTMLImageElement).src = '/images/golf.png'; }}
+                className="w-full h-full object-contain p-4 mix-blend-multiply opacity-95 group-hover:scale-110 transition-transform duration-700 ease-out" 
+              />
+            );
+          })()}
         </div>
       </Link>
       

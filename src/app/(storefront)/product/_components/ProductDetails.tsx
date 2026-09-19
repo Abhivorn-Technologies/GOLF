@@ -10,6 +10,18 @@ import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
 
 import ProductCard from '@/components/ProductCard';
+import WishlistButton from '@/components/WishlistButton';
+
+function resolveImgSrc(src?: string) {
+  if (!src || typeof src !== 'string' || src.trim() === '' || src === 'placeholder.png') {
+    return '/images/golf.png';
+  }
+  const clean = src.trim();
+  if (clean.startsWith('http://') || clean.startsWith('https://') || clean.startsWith('data:') || clean.startsWith('/')) {
+    return clean;
+  }
+  return `/images/${clean}`;
+}
 
 interface ProductDetailsProps {
   product: ProductType;
@@ -19,7 +31,7 @@ interface ProductDetailsProps {
 export default function ProductDetails({ product, relatedProducts = [] }: ProductDetailsProps) {
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
-  const { cartItems, addToCart, removeFromCart } = useCart();
+  const { cartItems, addToCart, buyNow, removeFromCart } = useCart();
   const { data: session } = useSession();
   const router = useRouter();
 
@@ -33,11 +45,26 @@ export default function ProductDetails({ product, relatedProducts = [] }: Produc
     return { name: trimmed, stock: null };
   }).filter(v => Boolean(v.name)) : [];
 
+  const hasVariants = product.variants && product.variants.length > 0;
+  
+  // NEW VARIANT LOGIC
+  const uniqueColors = hasVariants ? Array.from(new Set(product.variants!.filter(v => v.color).map(v => v.color))) : [];
+  const uniqueSizes = hasVariants ? Array.from(new Set(product.variants!.filter(v => v.size).map(v => v.size))) : [];
+
+  const [selectedColor, setSelectedColor] = useState<string>(uniqueColors[0] || '');
+  const [selectedSize, setSelectedSize] = useState<string>('');
+
+  // Find matching variant based on selections
+  const matchingVariant = hasVariants ? product.variants!.find(v => 
+    (selectedColor ? v.color === selectedColor : true) && 
+    (selectedSize ? v.size === selectedSize : true)
+  ) : null;
+
+  // OLD VARIANT LOGIC (Fallback)
   const sizes = getVariants(product.size);
   const lofts = getVariants(product.loft);
   const styles = getVariants(product.style);
   
-  // Custom dynamic attributes (e.g. Color)
   const dynamicVariants = (product as any).attributes?.map((attr: any) => ({
     key: attr.key,
     values: getVariants(attr.value)
@@ -50,49 +77,133 @@ export default function ProductDetails({ product, relatedProducts = [] }: Produc
   };
 
   const requiredVariants: string[] = [];
-  if (sizes.length > 1) requiredVariants.push('Size');
-  if (lofts.length > 1) requiredVariants.push('Loft');
-  if (styles.length > 1) requiredVariants.push('Style');
-  dynamicVariants.forEach((attr: any) => {
-    if (attr.values.length > 1) requiredVariants.push(attr.key);
-  });
-
-  const allSelected = requiredVariants.every(key => selectedVariants[key]);
-
-  // Set default selection if only one option exists
-  React.useEffect(() => {
-    const defaults: Record<string, string> = {};
-    if (sizes.length === 1 && sizes[0].stock !== 0) defaults['Size'] = sizes[0].name;
-    if (lofts.length === 1 && lofts[0].stock !== 0) defaults['Loft'] = lofts[0].name;
-    if (styles.length === 1 && styles[0].stock !== 0) defaults['Style'] = styles[0].name;
+  if (!hasVariants) {
+    if (sizes.length > 1) requiredVariants.push('Size');
+    if (lofts.length > 1) requiredVariants.push('Loft');
+    if (styles.length > 1) requiredVariants.push('Style');
     dynamicVariants.forEach((attr: any) => {
-      if (attr.values.length === 1 && attr.values[0].stock !== 0) defaults[attr.key] = attr.values[0].name;
+      if (attr.values.length > 1) requiredVariants.push(attr.key);
     });
-    if (Object.keys(defaults).length > 0) {
-      setSelectedVariants(prev => ({ ...prev, ...defaults }));
+  }
+
+  const allSelected = hasVariants 
+    ? ((uniqueColors.length > 0 ? !!selectedColor : true) && (uniqueSizes.length > 0 ? !!selectedSize : true))
+    : requiredVariants.every(key => selectedVariants[key]);
+
+  React.useEffect(() => {
+    if (hasVariants) {
+      if (uniqueColors.length > 0 && !selectedColor) {
+        const firstAvailableColor = uniqueColors.find(c => product.variants!.some(v => v.color === c && v.stockCount > 0)) || uniqueColors[0];
+        if (firstAvailableColor) setSelectedColor(firstAvailableColor);
+      }
+      if (uniqueSizes.length > 0 && !selectedSize) {
+        const firstAvailableSize = uniqueSizes.find(s => product.variants!.some(v => (selectedColor ? v.color === selectedColor : true) && v.size === s && v.stockCount > 0)) || uniqueSizes[0];
+        if (firstAvailableSize) setSelectedSize(firstAvailableSize);
+      }
+    } else {
+      const defaults: Record<string, string> = {};
+      if (sizes.length > 0) {
+        const available = sizes.find(s => s.stock !== 0) || sizes[0];
+        if (available) defaults['Size'] = available.name;
+      }
+      if (lofts.length > 0) {
+        const available = lofts.find(l => l.stock !== 0) || lofts[0];
+        if (available) defaults['Loft'] = available.name;
+      }
+      if (styles.length > 0) {
+        const available = styles.find(s => s.stock !== 0) || styles[0];
+        if (available) defaults['Style'] = available.name;
+      }
+      dynamicVariants.forEach((attr: any) => {
+        if (attr.values.length > 0) {
+          const available = attr.values.find((v: any) => v.stock !== 0) || attr.values[0];
+          if (available) defaults[attr.key] = available.name;
+        }
+      });
+      if (Object.keys(defaults).length > 0) {
+        setSelectedVariants(prev => ({ ...defaults, ...prev }));
+      }
     }
-  }, [product.id]);
+  }, [product.id, hasVariants]);
+
+  // Image swapper for variants
+  React.useEffect(() => {
+    if (hasVariants && selectedColor) {
+      const firstVariantWithColor = product.variants!.find(v => v.color === selectedColor && v.images && v.images.length > 0);
+      if (firstVariantWithColor && firstVariantWithColor.images![0]) {
+        setMainImage(firstVariantWithColor.images![0]);
+      }
+    }
+  }, [selectedColor, product.variants, hasVariants]);
+
+  // Compute thumbnail gallery images unconditionally
+  const displayImages = React.useMemo(() => {
+    const images = new Set<string>();
+    
+    // Always include global product images (if any)
+    if (product.images) {
+      product.images.forEach(img => images.add(img));
+    }
+    
+    // Always include ALL variant images so they act as a unified gallery
+    if (hasVariants) {
+      product.variants!.forEach(v => {
+        if (v.images) {
+          v.images.forEach(img => images.add(img));
+        }
+      });
+    }
+    
+    return Array.from(images);
+  }, [product.images, product.variants, hasVariants]);
 
   const [mainImage, setMainImage] = useState(product.image);
 
   const handleDecrease = () => setQuantity(prev => Math.max(1, prev - 1));
   const handleIncrease = () => setQuantity(prev => prev + 1);
 
-  const sortedCurrent = Object.entries(selectedVariants).sort().toString();
+  const sortedCurrent = hasVariants 
+    ? (matchingVariant?.id || 'unselected') 
+    : Object.entries(selectedVariants).sort().toString();
+  
   const currentCartItemId = `${product.id}-${sortedCurrent}`;
   const isInCart = cartItems.some(item => item.cartItemId === currentCartItemId);
 
+  const finalCartVariants = hasVariants 
+    ? { 
+        ...(selectedColor ? { Color: selectedColor } : {}), 
+        ...(selectedSize ? { Size: selectedSize } : {}),
+        variantId: matchingVariant?.id || ''
+      }
+    : selectedVariants;
+
   const handleAddToCart = () => {
+    if (!allSelected) {
+      const missingKey = hasVariants 
+        ? (!selectedColor ? 'Color' : (!selectedSize ? 'Size' : 'option'))
+        : (requiredVariants.find(key => !selectedVariants[key]) || 'option');
+      toast.error(`Please select a ${missingKey} option first!`);
+      return;
+    }
+
     setIsAdding(true);
     setTimeout(() => {
-      addToCart(product, quantity, selectedVariants);
+      addToCart(product, quantity, finalCartVariants);
       setIsAdding(false);
-      toast.success('Added to cart');
+      toast.success('Added to cart!');
     }, 400);
   };
 
   const handleBuyNow = () => {
-    addToCart(product, quantity, selectedVariants);
+    if (!allSelected) {
+      const missingKey = hasVariants 
+        ? (!selectedColor ? 'Color' : (!selectedSize ? 'Size' : 'option'))
+        : (requiredVariants.find(key => !selectedVariants[key]) || 'option');
+      toast.error(`Please select a ${missingKey} option first!`);
+      return;
+    }
+
+    buyNow(product, quantity, finalCartVariants);
     router.push('/checkout/shipping');
   };
 
@@ -121,9 +232,14 @@ export default function ProductDetails({ product, relatedProducts = [] }: Produc
     }
   };
 
-  // Helper to parse price string (e.g. "₹19,990.00" -> 19990.00)
-  const parsePrice = (priceStr: string) => {
-    return parseFloat(priceStr.replace(/[^0-9.-]+/g,""));
+  // Helper to parse price string or number (e.g. "₹19,990.00" -> 19990.00 or 19990 -> 19990)
+  const parsePrice = (priceStr: string | number) => {
+    if (typeof priceStr === 'number') return priceStr;
+    if (typeof priceStr === 'string') {
+      const parsed = parseFloat(priceStr.replace(/[^0-9.-]+/g, ""));
+      return isNaN(parsed) ? 0 : parsed;
+    }
+    return 0;
   };
 
   const formatPrice = (amount: number) => {
@@ -162,34 +278,57 @@ export default function ProductDetails({ product, relatedProducts = [] }: Produc
           {/* Left: Product Image Area */}
           <div className="flex-1">
             <div className="w-full aspect-[4/3] bg-[#fbf9f9] border border-[#c1c9bf] rounded-[16px] flex items-center justify-center p-[48px] relative">
-              <button 
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleAddToWishlist();
-                }}
-                className="absolute top-4 right-4 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-400 hover:text-rose-500 hover:scale-110 hover:bg-white transition-all shadow-sm z-10 border border-gray-200"
-              >
-                <Heart className="w-5 h-5" />
-              </button>
+              <WishlistButton productId={product.id || (product as any)._id} />
               <div className="w-full h-full bg-zinc-100 flex items-center justify-center rounded-[8px] overflow-hidden mix-blend-multiply relative">
-                {mainImage && mainImage !== 'placeholder.png' ? (
-                  <img src={mainImage.startsWith('http') ? mainImage : `/images/${mainImage}`} alt={product.name} className="w-full h-full object-contain" />
-                ) : (
-                  <span className="text-[#717b71] font-serif italic text-center px-4">Product Image</span>
-                )}
+                <img 
+                  src={resolveImgSrc(mainImage)} 
+                  alt={product.name} 
+                  className="w-full h-full object-contain" 
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    if (!target.dataset.fallback) {
+                      target.dataset.fallback = 'true';
+                      target.src = '/images/golf.png';
+                    }
+                  }}
+                />
               </div>
             </div>
             
             {/* Thumbnails */}
-            {product.images && product.images.length > 1 && (
+            {displayImages.length > 1 && (
               <div className="flex gap-[16px] mt-[16px] overflow-x-auto pb-2">
-                {product.images.map((img, idx) => (
+                {displayImages.map((img, idx) => (
                   <div 
                     key={idx} 
-                    onClick={() => setMainImage(img)}
+                    onClick={() => {
+                      setMainImage(img);
+                      if (hasVariants) {
+                        const matchingVariant = product.variants!.find(v => v.images && v.images.includes(img));
+                        if (matchingVariant && matchingVariant.color) {
+                          setSelectedColor(matchingVariant.color);
+                          // Reset size if the current size is not available in the new color
+                          const isSizeValidForNewColor = product.variants!.some(v => v.color === matchingVariant.color && v.size === selectedSize && v.stockCount > 0);
+                          if (!isSizeValidForNewColor) {
+                            setSelectedSize('');
+                          }
+                        }
+                      }
+                    }}
                     className={`w-[80px] h-[80px] rounded-[8px] border shrink-0 ${mainImage === img ? 'border-[#006747]' : 'border-[#c1c9bf]'} bg-[#fbf9f9] flex items-center justify-center cursor-pointer hover:border-[#006747] transition-colors p-[8px]`}
                   >
-                    <img src={img.startsWith('http') ? img : `/images/${img}`} alt="" className="w-full h-full object-contain mix-blend-multiply" />
+                    <img 
+                      src={resolveImgSrc(img)} 
+                      alt="" 
+                      className="w-full h-full object-contain mix-blend-multiply" 
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        if (!target.dataset.fallback) {
+                          target.dataset.fallback = 'true';
+                          target.src = '/images/golf.png';
+                        }
+                      }}
+                    />
                   </div>
                 ))}
               </div>
@@ -230,7 +369,68 @@ export default function ProductDetails({ product, relatedProducts = [] }: Produc
 
             {/* Variant Selectors */}
             <div className="flex flex-col gap-6 mb-8">
-              {sizes.length > 1 && (
+              
+              {/* NEW VARIANT RENDERER */}
+              {hasVariants && (
+                <>
+                  {uniqueColors.length > 0 && (
+                    <div>
+                      <span className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3 block">Color: {selectedColor}</span>
+                      <div className="flex flex-wrap gap-3">
+                        {uniqueColors.map(color => {
+                          const variantRef = product.variants!.find(v => v.color === color);
+                          return (
+                            <button 
+                              key={color}
+                              onClick={() => {
+                                setSelectedColor(color);
+                                setSelectedSize(''); // Reset size on color change to ensure validity
+                              }}
+                              className={`w-10 h-10 rounded-full border-2 transition-all p-0.5 ${selectedColor === color ? 'border-black' : 'border-transparent hover:border-gray-300'}`}
+                            >
+                              <div className="w-full h-full rounded-full border border-black/10" style={{ backgroundColor: variantRef?.colorCode || '#ccc' }}></div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {uniqueSizes.length > 0 && (
+                    <div>
+                      <span className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3 block">Size</span>
+                      <div className="flex flex-wrap gap-3">
+                        {uniqueSizes.map(size => {
+                          // Find the variant for the currently selected color and this size
+                          const variant = product.variants!.find(v => 
+                            (selectedColor ? v.color === selectedColor : true) && 
+                            v.size === size
+                          );
+                          const outOfStock = !variant || variant.stockCount === 0;
+
+                          return (
+                            <button 
+                              key={size}
+                              disabled={outOfStock}
+                              onClick={() => setSelectedSize(size)}
+                              className={`px-6 py-3 rounded-xl border font-semibold text-sm transition-all relative ${
+                                outOfStock ? 'opacity-50 cursor-not-allowed bg-gray-50 text-gray-400 border-gray-200' :
+                                selectedSize === size ? 'bg-black text-white border-black' : 'bg-white text-gray-700 border-gray-200 hover:border-black'
+                              }`}
+                            >
+                              {size}
+                              {outOfStock && <span className="absolute -top-2 -right-2 bg-red-100 text-red-600 text-[10px] px-1.5 py-0.5 rounded font-bold">Out</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* OLD VARIANT RENDERER (Fallback) */}
+              {!hasVariants && sizes.length > 1 && (
                 <div>
                   <span className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3 block">Size</span>
                   <div className="flex flex-wrap gap-3">
@@ -255,7 +455,7 @@ export default function ProductDetails({ product, relatedProducts = [] }: Produc
                 </div>
               )}
 
-              {lofts.length > 1 && (
+              {!hasVariants && lofts.length > 1 && (
                 <div>
                   <span className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3 block">Loft</span>
                   <div className="flex flex-wrap gap-3">
@@ -280,7 +480,7 @@ export default function ProductDetails({ product, relatedProducts = [] }: Produc
                 </div>
               )}
 
-              {styles.length > 1 && (
+              {!hasVariants && styles.length > 1 && (
                 <div>
                   <span className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3 block">Style</span>
                   <div className="flex flex-wrap gap-3">
@@ -305,7 +505,7 @@ export default function ProductDetails({ product, relatedProducts = [] }: Produc
                 </div>
               )}
 
-              {dynamicVariants.map((attr: any) => attr.values.length > 1 ? (
+              {!hasVariants && dynamicVariants.map((attr: any) => attr.values.length > 1 ? (
                 <div key={attr.key}>
                   <span className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3 block">{attr.key}</span>
                   <div className="flex flex-wrap gap-3">
@@ -365,15 +565,15 @@ export default function ProductDetails({ product, relatedProducts = [] }: Produc
               ) : (
                 <button 
                   onClick={handleAddToCart}
-                  disabled={isAdding || !allSelected}
-                  className="flex-1 h-[56px] bg-[#1b1c1c] text-white rounded-[8px] font-['Hanken_Grotesk'] font-medium text-[16px] flex items-center justify-center gap-[12px] hover:bg-[#333] transition-colors shadow-sm disabled:opacity-75 disabled:cursor-not-allowed"
+                  disabled={isAdding}
+                  className="flex-1 h-[56px] bg-[#1b1c1c] text-white rounded-[8px] font-['Hanken_Grotesk'] font-medium text-[16px] flex items-center justify-center gap-[12px] hover:bg-[#333] transition-colors shadow-sm disabled:opacity-75"
                 >
                   {isAdding ? (
                     <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                   ) : (
                     <>
                       <ShoppingCart className="w-5 h-5" />
-                      <span>{!allSelected ? 'Select Options' : 'Add to Cart'}</span>
+                      <span>Add to Cart</span>
                     </>
                   )}
                 </button>
@@ -382,8 +582,8 @@ export default function ProductDetails({ product, relatedProducts = [] }: Produc
               {/* Buy Now Button */}
               <button 
                 onClick={handleBuyNow}
-                disabled={isAdding || !allSelected}
-                className="flex-1 h-[56px] bg-green-700 text-white rounded-[8px] font-['Hanken_Grotesk'] font-bold text-[16px] flex items-center justify-center hover:bg-green-800 transition-colors shadow-sm disabled:opacity-75 disabled:cursor-not-allowed"
+                disabled={isAdding}
+                className="flex-1 h-[56px] bg-green-700 text-white rounded-[8px] font-['Hanken_Grotesk'] font-bold text-[16px] flex items-center justify-center hover:bg-green-800 transition-colors shadow-sm disabled:opacity-75"
               >
                 Buy Now
               </button>

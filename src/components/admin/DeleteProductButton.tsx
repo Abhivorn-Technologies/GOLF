@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Trash2, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 
 export default function DeleteProductButton({ productId }: { productId: string }) {
   const [isDeleting, setIsDeleting] = useState(false);
@@ -16,13 +17,14 @@ export default function DeleteProductButton({ productId }: { productId: string }
         method: 'DELETE',
       });
       if (res.ok) {
+        toast.success('Product deleted successfully');
         router.refresh();
       } else {
-        alert('Failed to delete product.');
+        toast.error('Failed to delete product.');
       }
     } catch (err) {
       console.error(err);
-      alert('An error occurred while deleting the product.');
+      toast.error('An error occurred while deleting the product.');
     } finally {
       setIsDeleting(false);
       setShowConfirm(false);

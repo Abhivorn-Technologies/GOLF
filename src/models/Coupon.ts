@@ -12,8 +12,6 @@ const CouponSchema = new mongoose.Schema({
   description: { type: String }
 }, { timestamps: true });
 
-if (process.env.NODE_ENV !== 'production' && mongoose.models.Coupon) {
-  delete mongoose.models.Coupon;
-}
+CouponSchema.index({ code: 1, isActive: 1 });
 
 export default mongoose.models.Coupon || mongoose.model('Coupon', CouponSchema);
