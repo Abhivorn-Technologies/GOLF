@@ -7,12 +7,24 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
+import mongoose from 'mongoose';
+
 export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   
   await dbConnect();
   
-  const product = await Product.findById(id).lean();
+  let product = null;
+  try {
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      product = await Product.findById(id).lean();
+    }
+    if (!product) {
+      product = await Product.findOne({ slug: id }).lean();
+    }
+  } catch (err) {
+    console.error("Error fetching product for edit:", err);
+  }
   
   if (!product) {
     notFound();

@@ -124,11 +124,11 @@ export default async function ProductsPage(props: { searchParams: Promise<{ [key
                     </td>
                     <td className="py-4 px-8 font-bold text-gray-900">${product.price.toFixed(2)}</td>
                     <td className="py-4 px-8">
-                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Link href={`/admin/products/${product._id.toString()}`} className="p-2.5 text-gray-400 hover:text-black hover:bg-gray-100 rounded-xl transition-all">
+                      <div className="flex items-center justify-end gap-2">
+                        <Link href={`/admin/products/${(product._id || product.id).toString()}`} className="p-2.5 text-gray-600 hover:text-black hover:bg-gray-100 rounded-xl transition-all shadow-sm border border-gray-100" title="Edit Product">
                           <Edit2 className="w-4 h-4" />
                         </Link>
-                        <DeleteProductButton productId={product._id.toString()} />
+                        <DeleteProductButton productId={(product._id || product.id).toString()} />
                       </div>
                     </td>
                   </tr>
