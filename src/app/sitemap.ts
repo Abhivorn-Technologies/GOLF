@@ -2,15 +2,12 @@ import { MetadataRoute } from 'next';
 import dbConnect from '@/lib/mongodb';
 import Product from '@/models/Product';
 
+export const dynamic = 'force-dynamic';
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   
-  // Connect to DB to fetch all product slugs
-  await dbConnect();
-  const products = await Product.find({ slug: { $exists: true } }).select('slug updatedAt').lean() as any[];
-
-  // Base routes
-  const routes = [
+  const baseRoutes = [
     '',
     '/search',
     '/products',
@@ -28,13 +25,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: route === '' ? 1 : 0.8,
   }));
 
-  // Product routes
-  const productRoutes = products.map((product) => ({
-    url: `${baseUrl}/product/${product.slug}`,
-    lastModified: product.updatedAt || new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: 0.6,
-  }));
+  let productRoutes: MetadataRoute.Sitemap = [];
 
-  return [...routes, ...productRoutes];
+  try {
+    await dbConnect();
+    const products = await Product.find({ slug: { $exists: true } }).select('slug updatedAt').lean() as any[];
+    
+    productRoutes = products.map((product) => ({
+      url: `${baseUrl}/product/${product.slug}`,
+      lastModified: product.updatedAt || new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.6,
+    }));
+  } catch (error) {
+    console.error('Sitemap DB fetch fallback:', error);
+  }
+
+  return [...baseRoutes, ...productRoutes];
 }

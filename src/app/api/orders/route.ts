@@ -212,7 +212,6 @@ export async function POST(req: NextRequest) {
 
   } catch (error: any) {
     console.error('Error creating order:', error);
-    require('fs').writeFileSync('d:/golf-ecom/error_log.txt', error.stack || error.message);
     return NextResponse.json({ error: 'Failed to create order', details: error.message }, { status: 500 });
   }
 }

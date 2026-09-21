@@ -49,7 +49,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(newProduct, { status: 201 });
   } catch (error: any) {
     console.error("Product creation error:", error);
-    require('fs').writeFileSync('last_error.log', error.stack || error.toString());
     return NextResponse.json({ error: 'Failed to create product' }, { status: 500 });
   }
 }
