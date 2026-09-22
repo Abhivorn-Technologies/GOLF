@@ -79,6 +79,21 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
     }
   };
 
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+      const newPreviews = files.map(file => URL.createObjectURL(file));
+      
+      setImageFiles(prev => [...prev, ...files]);
+      setImagePreviews(prev => [...prev, ...newPreviews]);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
   const removeImage = (index: number) => {
     setImagePreviews(prev => prev.filter((_, i) => i !== index));
     setImageFiles(prev => prev);
@@ -386,7 +401,11 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
         {/* Image Upload Area (Right) */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Product Images</label>
-          <div className="border-2 border-dashed border-gray-300 rounded-2xl min-h-[400px] flex flex-col relative bg-gray-50/50 hover:bg-gray-50 transition-colors p-6">
+          <div 
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            className="border-2 border-dashed border-gray-300 rounded-2xl min-h-[400px] flex flex-col relative bg-gray-50/50 hover:bg-gray-50 transition-colors p-6"
+          >
             
             {imagePreviews.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full">
