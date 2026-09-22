@@ -182,7 +182,7 @@ export default function TopNavBar({ megaMenuData = {}, utilityBar }: { megaMenuD
               </div>
 
               {/* Dynamic Filter Columns */}
-              <div className="w-3/4 grid grid-cols-3 gap-8">
+              <div className="w-3/4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
                 
                 {/* Brands Column */}
                 {megaMenuData[hoveredCategory]?.brands?.length > 0 && (
@@ -215,8 +215,8 @@ export default function TopNavBar({ megaMenuData = {}, utilityBar }: { megaMenuD
                   </div>
                 )}
 
-                {/* Dynamic Attributes Columns */}
-                {Object.entries(megaMenuData[hoveredCategory]?.attributes || {}).slice(0, 2).map(([attrKey, attrValues]: any) => (
+                {/* Dynamic Attributes Columns (Gender, Size, Style, Type, etc.) */}
+                {Object.entries(megaMenuData[hoveredCategory]?.attributes || {}).slice(0, 3).map(([attrKey, attrValues]: any) => (
                   <div key={attrKey}>
                     <h4 className="text-sm font-bold text-black uppercase tracking-widest mb-4">{attrKey}</h4>
                     <ul className="space-y-3">
@@ -321,7 +321,7 @@ export default function TopNavBar({ megaMenuData = {}, utilityBar }: { megaMenuD
                           <div>
                             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Brands</p>
                             <div className="flex flex-col gap-2">
-                              {megaMenuData[item].brands.slice(0, 5).map((brand: any) => (
+                              {megaMenuData[item].brands.slice(0, 6).map((brand: any) => (
                                 <Link 
                                   key={brand.name}
                                   href={`/category/${item.toLowerCase()}?brand=${encodeURIComponent(brand.name)}`}
@@ -334,6 +334,24 @@ export default function TopNavBar({ megaMenuData = {}, utilityBar }: { megaMenuD
                             </div>
                           </div>
                         )}
+
+                        {Object.entries(megaMenuData[item].attributes || {}).slice(0, 2).map(([attrKey, attrValues]: any) => (
+                          <div key={attrKey} className="mt-1">
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{attrKey}</p>
+                            <div className="flex flex-col gap-2">
+                              {attrValues.slice(0, 6).map((val: any) => (
+                                <Link 
+                                  key={val.name}
+                                  href={`/category/${item.toLowerCase()}?${attrKey.toLowerCase()}=${encodeURIComponent(val.name)}`}
+                                  onClick={() => setIsMobileMenuOpen(false)}
+                                  className="text-sm text-gray-600 hover:text-green-600"
+                                >
+                                  {val.name}
+                                </Link>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </>
