@@ -2,14 +2,19 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { useCart } from '@/context/CartContext';
 import { Tag, Sparkles } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface OrderSummaryProps {
   showCheckoutButton?: boolean;
 }
 
 export default function OrderSummary({ showCheckoutButton = false }: OrderSummaryProps) {
+  const { data: session } = useSession();
+  const router = useRouter();
   const { 
     cartItems, 
     updateCartItemVariants, 
@@ -361,12 +366,19 @@ export default function OrderSummary({ showCheckoutButton = false }: OrderSummar
               </div>
             )}
             {canCheckout ? (
-              <Link 
-                href="/checkout/shipping"
-                className="bg-[#004d34] text-white font-['Hanken_Grotesk'] font-medium text-[16px] py-[16px] px-[32px] rounded-full w-full hover:bg-[#003825] transition-colors flex justify-center items-center"
+              <button 
+                onClick={() => {
+                  if (!session) {
+                    toast.error("Please sign in or register to proceed to checkout!");
+                    router.push(`/login?redirect=${encodeURIComponent('/checkout/shipping')}`);
+                  } else {
+                    router.push('/checkout/shipping');
+                  }
+                }}
+                className="bg-[#004d34] text-white font-['Hanken_Grotesk'] font-medium text-[16px] py-[16px] px-[32px] rounded-full w-full hover:bg-[#003825] transition-colors flex justify-center items-center cursor-pointer"
               >
                 Proceed to Checkout
-              </Link>
+              </button>
             ) : (
               <button 
                 disabled

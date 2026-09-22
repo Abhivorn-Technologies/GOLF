@@ -1,20 +1,33 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Plus, Check } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { useSession } from 'next-auth/react';
+import toast from 'react-hot-toast';
 
 export default function QuickAddOverlay({ product }: { product: any }) {
   const { addToCart } = useCart();
+  const { data: session } = useSession();
+  const router = useRouter();
   const [added, setAdded] = useState(false);
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
+    if (!session) {
+      toast.error("Please sign in or register to add items to your cart!");
+      const returnUrl = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/';
+      router.push(`/login?redirect=${encodeURIComponent(returnUrl)}`);
+      return;
+    }
+
     // Quick Add adds 1 quantity
     addToCart(product, 1, {});
     setAdded(true);
+    toast.success('Added to cart!');
     setTimeout(() => setAdded(false), 2000);
   };
 

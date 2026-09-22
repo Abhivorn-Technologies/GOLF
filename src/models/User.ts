@@ -22,7 +22,13 @@ const UserSchema = new mongoose.Schema({
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
   newsletterSubscribed: { type: Boolean, default: false },
   addresses: [AddressSchema],
-  wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }]
+  wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date }
 }, { timestamps: true });
+
+if (mongoose.models && mongoose.models.User) {
+  delete (mongoose.models as any).User;
+}
 
 export default mongoose.models.User || mongoose.model('User', UserSchema);

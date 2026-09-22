@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Heart } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
@@ -28,6 +29,7 @@ export function invalidateWishlistCache() {
 
 export default function WishlistButton({ productId, className }: { productId: string, className?: string }) {
   const { data: session } = useSession();
+  const router = useRouter();
   const [added, setAdded] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -62,7 +64,9 @@ export default function WishlistButton({ productId, className }: { productId: st
     e.stopPropagation();
 
     if (!session) {
-      toast.error("Please login to save items to your wishlist!");
+      toast.error("Please sign in or register to save items to your wishlist!");
+      const returnUrl = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/';
+      router.push(`/login?redirect=${encodeURIComponent(returnUrl)}`);
       return;
     }
 

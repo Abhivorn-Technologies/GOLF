@@ -30,26 +30,26 @@ export default function FeaturedDeals({ deals }: FeaturedDealsProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {dealsToDisplay.length > 0 ? (
             dealsToDisplay.map((deal) => (
-            <div key={deal.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300 border border-gray-100 flex flex-col group cursor-pointer block relative">
+            <div key={deal.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300 border border-gray-100 flex flex-col group relative">
               <div className="relative w-full aspect-square bg-[#f8f9fa] overflow-hidden">
                 <WishlistButton productId={deal.id || deal._id} />
                 <span className="absolute top-4 left-4 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-sm uppercase tracking-wider shadow-sm z-10">
                   {deal.discount} OFF
                 </span>
-                <div className="w-full h-full flex items-center justify-center text-zinc-400 group-hover:scale-105 transition-transform duration-500 relative">
+                <Link href={`/product/${deal.slug || deal.id}`} className="w-full h-full flex items-center justify-center text-zinc-400 group-hover:scale-105 transition-transform duration-500 relative block">
                   {deal.image ? (
                     <img src={resolveImg(deal.image || '')} alt={deal.name} className="absolute inset-0 w-full h-full object-contain p-4 mix-blend-multiply" />
                   ) : (
                     <span>Product Image Placeholder</span>
                   )}
-                </div>
+                </Link>
               </div>
               
               <div className="p-6 flex flex-col flex-grow">
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{deal.brand}</span>
-                <h3 className="text-xl font-bold text-zinc-900 leading-tight mb-4 line-clamp-2">
+                <Link href={`/product/${deal.slug || deal.id}`} className="text-xl font-bold text-zinc-900 hover:text-green-600 transition-colors leading-tight mb-4 line-clamp-2">
                   {deal.name}
-                </h3>
+                </Link>
                 
                 <div className="mt-auto">
                   <div className="flex items-baseline gap-3 mb-6">
@@ -59,9 +59,12 @@ export default function FeaturedDeals({ deals }: FeaturedDealsProps) {
                     )}
                   </div>
                   
-                  <button suppressHydrationWarning className="w-full bg-zinc-900 hover:bg-green-600 text-white font-bold py-4 rounded-xl transition-colors duration-300 uppercase tracking-wide text-sm">
+                  <Link 
+                    href={`/product/${deal.slug || deal.id}`}
+                    className="w-full bg-zinc-900 hover:bg-green-600 text-white font-bold py-4 rounded-xl transition-colors duration-300 uppercase tracking-wide text-sm flex items-center justify-center text-center"
+                  >
                     Shop Now
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>

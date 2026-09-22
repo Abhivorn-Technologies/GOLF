@@ -30,6 +30,18 @@ interface Banner {
   buttonSize?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
+function sanitizeBannerUrl(url?: string | null, fallback = '/products') {
+  if (!url || typeof url !== 'string') return fallback;
+  const trimmed = url.trim();
+  if (!trimmed || trimmed === '#' || trimmed.toLowerCase() === 'shop now' || trimmed.toLowerCase() === 'null') {
+    return fallback;
+  }
+  if (trimmed.startsWith('/') || trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+  return `/${trimmed}`;
+}
+
 export default function HeroCarousel({ banners }: { banners: Banner[] }) {
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -71,9 +83,9 @@ export default function HeroCarousel({ banners }: { banners: Banner[] }) {
         <div className="relative z-10 max-w-4xl mx-auto px-8">
           <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter mb-6">Elevate Your Game</h1>
           <p className="text-xl md:text-2xl text-zinc-300 font-medium mb-10 max-w-2xl mx-auto">Discover the latest gear from top brands to take your performance to the next level.</p>
-          <button suppressHydrationWarning className="bg-green-600 hover:bg-green-500 text-white font-bold py-4 px-12 rounded-xl transition-colors uppercase tracking-widest shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+          <Link href="/products" className="inline-block bg-green-600 hover:bg-green-500 text-white font-bold py-4 px-12 rounded-xl transition-colors uppercase tracking-widest shadow-lg hover:shadow-xl transform hover:-translate-y-1">
             Shop Now
-          </button>
+          </Link>
         </div>
       </section>
     );
@@ -112,7 +124,7 @@ export default function HeroCarousel({ banners }: { banners: Banner[] }) {
           const buttonPos = getPos(banner.buttonPosition, 192, 360);
 
 
-          const targetUrl = banner.linkUrl && banner.linkUrl !== '#' ? banner.linkUrl : '/products';
+          const targetUrl = sanitizeBannerUrl(banner.linkUrl, '/products');
           const isFullBannerClickable = !banner.buttonText && !banner.button2Text;
           const SlideWrapper = isFullBannerClickable ? Link : 'div';
           const wrapperProps = isFullBannerClickable 
@@ -207,7 +219,7 @@ export default function HeroCarousel({ banners }: { banners: Banner[] }) {
                 >
                   {banner.buttonText && (
                     <Link 
-                      href={banner.linkUrl && banner.linkUrl !== '#' ? banner.linkUrl : '/products'}
+                      href={sanitizeBannerUrl(banner.linkUrl, '/products')}
                       className="inline-block font-bold py-3.5 px-6 rounded-2xl uppercase tracking-widest shadow-lg transition-transform hover:-translate-y-1 text-sm"
                       style={{ backgroundColor: banner.buttonColor || '#16a34a', color: banner.buttonTextColor || '#ffffff' }}
                     >
@@ -216,7 +228,7 @@ export default function HeroCarousel({ banners }: { banners: Banner[] }) {
                   )}
                   {banner.button2Text && (
                     <Link 
-                      href={banner.button2Url && banner.button2Url !== '#' ? banner.button2Url : '/sale'}
+                      href={sanitizeBannerUrl(banner.button2Url, '/sale')}
                       className="inline-block font-bold py-3.5 px-6 rounded-2xl uppercase tracking-widest shadow-lg transition-transform hover:-translate-y-1 text-sm"
                       style={{ backgroundColor: banner.button2Color || '#ffffff', color: banner.button2TextColor || '#000000' }}
                     >
@@ -298,7 +310,7 @@ export default function HeroCarousel({ banners }: { banners: Banner[] }) {
                 >
                   {banner.buttonText && (
                     <Link 
-                      href={banner.linkUrl && banner.linkUrl !== '#' ? banner.linkUrl : '/products'}
+                      href={sanitizeBannerUrl(banner.linkUrl, '/products')}
                       className={`inline-block font-bold rounded-2xl uppercase tracking-widest shadow-lg transition-transform hover:-translate-y-1 ${
                         banner.buttonSize === 'sm' ? 'py-3 px-6 text-base' :
                         banner.buttonSize === 'lg' ? 'py-5 px-10 text-xl' :
@@ -312,7 +324,7 @@ export default function HeroCarousel({ banners }: { banners: Banner[] }) {
                   )}
                   {banner.button2Text && (
                     <Link 
-                      href={banner.button2Url && banner.button2Url !== '#' ? banner.button2Url : '/sale'}
+                      href={sanitizeBannerUrl(banner.button2Url, '/sale')}
                       className={`inline-block font-bold rounded-2xl uppercase tracking-widest shadow-lg transition-transform hover:-translate-y-1 ${
                         banner.buttonSize === 'sm' ? 'py-3 px-6 text-base' :
                         banner.buttonSize === 'lg' ? 'py-5 px-10 text-xl' :

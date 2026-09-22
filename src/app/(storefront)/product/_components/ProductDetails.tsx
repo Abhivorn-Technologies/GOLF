@@ -178,6 +178,13 @@ export default function ProductDetails({ product, relatedProducts = [] }: Produc
     : selectedVariants;
 
   const handleAddToCart = () => {
+    if (!session) {
+      toast.error("Please sign in or register to add items to your cart!");
+      const returnUrl = typeof window !== 'undefined' ? window.location.pathname + window.location.search : `/product/${product.slug || product.id}`;
+      router.push(`/login?redirect=${encodeURIComponent(returnUrl)}`);
+      return;
+    }
+
     if (!allSelected) {
       const missingKey = hasVariants 
         ? (!selectedColor ? 'Color' : (!selectedSize ? 'Size' : 'option'))
@@ -195,6 +202,12 @@ export default function ProductDetails({ product, relatedProducts = [] }: Produc
   };
 
   const handleBuyNow = () => {
+    if (!session) {
+      toast.error("Please sign in or register to proceed to checkout!");
+      router.push(`/login?redirect=${encodeURIComponent('/checkout/shipping')}`);
+      return;
+    }
+
     if (!allSelected) {
       const missingKey = hasVariants 
         ? (!selectedColor ? 'Color' : (!selectedSize ? 'Size' : 'option'))
@@ -213,7 +226,9 @@ export default function ProductDetails({ product, relatedProducts = [] }: Produc
 
   const handleAddToWishlist = async () => {
     if (!session) {
-      toast.error("Please login to add to wishlist!");
+      toast.error("Please sign in or register to add items to your wishlist!");
+      const returnUrl = typeof window !== 'undefined' ? window.location.pathname + window.location.search : `/product/${product.slug || product.id}`;
+      router.push(`/login?redirect=${encodeURIComponent(returnUrl)}`);
       return;
     }
     try {

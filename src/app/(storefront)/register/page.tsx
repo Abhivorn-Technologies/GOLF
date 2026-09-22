@@ -1,15 +1,17 @@
 "use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
 import { validatePassword } from '@/lib/validations';
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTarget = searchParams.get('redirect') || searchParams.get('callbackUrl') || '';
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -46,8 +48,11 @@ export default function RegisterPage() {
         throw new Error(data.error || 'Registration failed');
       }
 
-      // Success, redirect to login
-      router.push('/login?registered=true');
+      // Success, redirect to login with redirect param preserved
+      const loginUrl = redirectTarget 
+        ? `/login?registered=true&redirect=${encodeURIComponent(redirectTarget)}`
+        : '/login?registered=true';
+      router.push(loginUrl);
     } catch (err: any) {
       setError(err.message);
       setLoading(false);
@@ -150,10 +155,18 @@ export default function RegisterPage() {
           </button>
 
           <div className="text-center text-xs font-medium text-gray-600">
-            Already have an account? <Link href="/login" className="text-black font-bold hover:underline">Sign In here</Link>
+            Already have an account? <Link href={redirectTarget ? `/login?redirect=${encodeURIComponent(redirectTarget)}` : "/login"} className="text-black font-bold hover:underline">Sign In here</Link>
           </div>
         </form>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#f4f4f5] flex items-center justify-center"><div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin"></div></div>}>
+      <RegisterForm />
+    </Suspense>
   );
 }

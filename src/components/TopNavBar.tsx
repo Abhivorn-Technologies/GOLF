@@ -342,7 +342,23 @@ export default function TopNavBar({ megaMenuData = {}, utilityBar }: { megaMenuD
             );
           })}
           
-          <div className="pt-4 mt-2 border-t border-gray-100 mb-8">
+          <div className="pt-4 mt-2 border-t border-gray-100 mb-8 flex flex-col gap-2">
+            <Link 
+              href="/cart" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center justify-between text-zinc-800 hover:text-green-600 font-bold uppercase text-sm p-3 bg-gray-50 rounded-lg"
+            >
+              <div className="flex items-center space-x-3">
+                <ShoppingCart className="w-5 h-5" />
+                <span>My Cart</span>
+              </div>
+              {cartCount > 0 && (
+                <span className="bg-green-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+
             <Link 
               href={session ? '/account' : '/login'} 
               onClick={() => setIsMobileMenuOpen(false)}

@@ -42,7 +42,7 @@ export default function BestBrandsCarousel({ brands = [] }: { brands?: Brand[] }
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 pb-4">
         {displayBrands.map((brand) => {
           const isValidUrl = brand.link && brand.link.length > 1 && (brand.link.startsWith('/') || brand.link.startsWith('http'));
-          const targetHref = isValidUrl ? brand.link : `?brand=${encodeURIComponent(brand.name)}`;
+          const targetHref = isValidUrl ? brand.link : `/products?brand=${encodeURIComponent(brand.name)}`;
           return (
           <Link key={brand.id} href={targetHref} scroll={false} className="flex-1 flex flex-col group cursor-pointer">
             <div className={`w-full h-[310px] rounded-xl bg-gradient-to-br ${brand.color || 'from-gray-100 to-gray-200'} mb-4 relative overflow-hidden transition-transform duration-300 group-hover:scale-[1.02] border border-gray-100`}>

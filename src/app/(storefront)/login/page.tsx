@@ -1,17 +1,19 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 
-export default function LoginPage() {
+function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTarget = searchParams.get('redirect') || searchParams.get('callbackUrl') || '';
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -38,6 +40,8 @@ export default function LoginPage() {
         
         if (session?.user?.role === 'admin') {
           router.push('/admin');
+        } else if (redirectTarget && redirectTarget.startsWith('/') && !redirectTarget.startsWith('//')) {
+          router.push(redirectTarget);
         } else {
           router.push('/account');
         }
@@ -70,6 +74,18 @@ export default function LoginPage() {
           <p className="text-gray-500 text-sm font-medium">Welcome back. Sign in to your account.</p>
         </div>
 
+        {searchParams.get('resetSuccess') && (
+          <div className="w-full mb-6 p-3 bg-emerald-50 text-emerald-800 text-sm rounded-lg text-center font-medium border border-emerald-200">
+            Password reset successful! Please sign in with your new password.
+          </div>
+        )}
+
+        {searchParams.get('registered') && (
+          <div className="w-full mb-6 p-3 bg-emerald-50 text-emerald-800 text-sm rounded-lg text-center font-medium border border-emerald-200">
+            Account created successfully! Please sign in.
+          </div>
+        )}
+
         {error && (
           <div className="w-full mb-6 p-3 bg-red-50 text-red-600 text-sm rounded-lg text-center font-medium border border-red-100">
             {error}
@@ -89,7 +105,15 @@ export default function LoginPage() {
           </div>
 
           <div className="mb-8">
-            <label className="block text-xs font-bold text-gray-900 mb-1.5 uppercase tracking-wider">Password</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-bold text-gray-900 uppercase tracking-wider">Password</label>
+              <Link 
+                href="/forgot-password" 
+                className="text-xs text-zinc-500 hover:text-black font-semibold transition-colors"
+              >
+                Forgot password?
+              </Link>
+            </div>
             <div className="relative w-full">
               <input 
                 name="password"
@@ -120,10 +144,18 @@ export default function LoginPage() {
           </button>
 
           <div className="text-center text-xs font-medium text-gray-600">
-            Don't have an account? <Link href="/register" className="text-black font-bold hover:underline">Create one here</Link>
+            Don't have an account? <Link href={redirectTarget ? `/register?redirect=${encodeURIComponent(redirectTarget)}` : "/register"} className="text-black font-bold hover:underline">Create one here</Link>
           </div>
         </form>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#f4f4f5] flex items-center justify-center"><div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin"></div></div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

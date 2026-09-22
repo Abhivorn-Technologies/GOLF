@@ -169,7 +169,7 @@ export default function Footer() {
             © {new Date().getFullYear()} LORVEN GOLF. All rights reserved.
           </p>
           <p className="text-gray-400 text-sm font-medium text-center md:text-right">
-            Developed by <span className="font-bold text-black">Abhivorn Technologies Pvt Ltd</span>
+            Developed by <span className="font-bold text-black">Abhivorn Technologies</span> & <span className="font-bold text-black">Digilevelup</span>
           </p>
         </div>
 

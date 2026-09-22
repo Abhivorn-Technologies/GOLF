@@ -9,7 +9,7 @@ import { useSession } from 'next-auth/react';
 
 export default function CheckoutShipping() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const { shippingAddress, setShippingAddress } = useCart();
   
   const [addresses, setAddresses] = useState<any[]>([]);
@@ -37,13 +37,14 @@ export default function CheckoutShipping() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    if (session?.user) {
-      fetchAddresses();
-    } else {
-      setMode('form');
-      setLoading(false);
+    if (status === 'loading') return;
+    if (!session?.user) {
+      toast.error("Please sign in or register to proceed to checkout!");
+      router.push(`/login?redirect=${encodeURIComponent('/checkout/shipping')}`);
+      return;
     }
-  }, [session]);
+    fetchAddresses();
+  }, [session, status]);
 
   const fetchAddresses = async () => {
     try {
