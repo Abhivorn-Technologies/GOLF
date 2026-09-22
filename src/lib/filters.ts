@@ -27,8 +27,8 @@ export async function getMegaMenuData() {
   } catch (error) {
     console.error("Error fetching mega menu data from DB:", error);
   }
-  // Only use dynamic DB products so the counts exactly match what's in the database
-  const products = dbProducts;
+  // Use dynamic DB products, fallback to static ALL_PRODUCTS if DB is empty or timing out
+  const products = (dbProducts && dbProducts.length > 0) ? dbProducts : (ALL_PRODUCTS as any[]);
   
   const categories = ['Clubs', 'Shoes', 'Apparel', 'Bags', 'Balls', 'Accessories'];
   
