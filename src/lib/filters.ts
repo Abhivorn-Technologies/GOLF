@@ -4,7 +4,7 @@ import { ALL_PRODUCTS } from "@/data/products";
 
 let cachedMegaMenuData: Record<string, any> | null = null;
 let lastCacheTime = 0;
-const CACHE_TTL_MS = 15000; // 15 seconds cache
+const CACHE_TTL_MS = 300000; // 5 minutes cache
 
 function formatBrandName(name: string): string {
   if (!name) return '';

@@ -16,7 +16,7 @@ export default function RevenueChart({ data }: { data: BarData[] }) {
         {data.map((d, i) => (
           <div key={i} className="flex flex-col items-center flex-1 gap-1">
             <span className="text-[9px] font-bold text-gray-500 whitespace-nowrap">
-              {d.value > 0 ? `₹${(d.value / 1000).toFixed(1)}k` : ''}
+              {d.value > 0 ? (d.value >= 1000 ? `₹${(d.value / 1000).toFixed(1)}k` : `₹${Math.round(d.value)}`) : ''}
             </span>
             <div
               className="w-full rounded-t-lg bg-black transition-all duration-700 min-h-[4px]"
