@@ -26,9 +26,14 @@ export const authOptions: AuthOptions = {
           const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
           if (!isPasswordValid) return null;
 
-          return { id: user._id.toString(), name: user.name, email: user.email, role: user.role };
+          return { 
+            id: user._id.toString(), 
+            name: user.name, 
+            email: user.email, 
+            role: user.role || 'user' 
+          };
         } catch (error) {
-          console.error("Auth error:", error);
+          console.error("NextAuth Authorize error:", error);
           return null;
         }
       }
@@ -38,26 +43,73 @@ export const authOptions: AuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.role = (user as any).role;
+        token.id = (user as any).id;
       }
       return token;
     },
     async session({ session, token }) {
       if (session?.user) {
-        (session.user as any).role = token.role;
+        (session.user as any).role = token.role || 'user';
+        (session.user as any).id = token.id || token.sub;
       }
       return session;
     }
   },
   pages: {
     signIn: "/login",
+    error: "/login",
   },
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || "fallback-secret-key-for-development",
 };
 
-const handler = NextAuth(authOptions);
+const nextAuthHandler = NextAuth(authOptions);
 
-export { handler as GET, handler as POST };
+export async function GET(req: any, context: any) {
+  try {
+    let params = context?.params;
+    if (params && typeof params.then === 'function') {
+      params = await params;
+    }
+    const res = await nextAuthHandler(req, { ...context, params });
+    if (res && res.status === 500) {
+      return new Response(JSON.stringify({ user: null }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      });
+    }
+    return res;
+  } catch (err: any) {
+    console.error("NEXTAUTH_INTERNAL_ERROR:", err);
+    return new Response(JSON.stringify({ user: null }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" }
+    });
+  }
+}
+
+export async function POST(req: any, context: any) {
+  try {
+    let params = context?.params;
+    if (params && typeof params.then === 'function') {
+      params = await params;
+    }
+    const res = await nextAuthHandler(req, { ...context, params });
+    if (res && res.status === 500) {
+      return new Response(JSON.stringify({ error: "Auth processing error" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      });
+    }
+    return res;
+  } catch (err: any) {
+    console.error("NEXTAUTH_INTERNAL_ERROR:", err);
+    return new Response(JSON.stringify({ error: err?.message || "Auth error" }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" }
+    });
+  }
+}

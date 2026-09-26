@@ -4,7 +4,41 @@ import { ALL_PRODUCTS } from "@/data/products";
 
 let cachedMegaMenuData: Record<string, any> | null = null;
 let lastCacheTime = 0;
-const CACHE_TTL_MS = 30000; // 30 seconds cache
+const CACHE_TTL_MS = 300000; // 5 minutes cache
+
+function formatBrandName(name: string): string {
+  if (!name) return '';
+  const trimmed = name.trim();
+  const lower = trimmed.toLowerCase();
+  if (lower === 'nike') return 'Nike';
+  if (lower === 'footjoy') return 'FootJoy';
+  if (lower === 'callaway') return 'Callaway';
+  if (lower === 'titleist') return 'Titleist';
+  if (lower === 'taylormade') return 'TaylorMade';
+  if (lower === 'j.lindeberg' || lower === 'jlindeberg') return 'J.Lindeberg';
+  if (lower === 'puma') return 'Puma';
+  if (lower === 'ping') return 'Ping';
+  if (lower === 'cobra') return 'Cobra';
+  if (lower === 'srixon') return 'Srixon';
+  if (lower === 'mizuno') return 'Mizuno';
+  if (lower === 'under armour' || lower === 'underarmour') return 'Under Armour';
+  return trimmed.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+function normalizeGender(g: string): string {
+  if (!g) return '';
+  const lower = g.trim().toLowerCase();
+  if (lower.includes('women') || lower.includes('lady') || lower.includes('female')) {
+    return "Women's";
+  }
+  if (lower.includes('men') || lower.includes('male')) {
+    return "Men's";
+  }
+  if (lower.includes('unisex')) {
+    return "Unisex";
+  }
+  return g.trim();
+}
 
 export async function getMegaMenuData() {
   const now = Date.now();

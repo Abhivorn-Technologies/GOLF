@@ -40,8 +40,7 @@ export default function AdminLoginPage() {
       if (!res.ok) {
         setError(data.error || "Invalid admin credentials");
       } else {
-        router.push('/admin');
-        router.refresh();
+        window.location.href = '/admin';
       }
     } catch (err) {
       setError("An unexpected error occurred");
