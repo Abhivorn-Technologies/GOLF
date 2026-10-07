@@ -5,6 +5,7 @@ import {
   Phone, MapPin, Clock, CreditCard, ShieldCheck, 
   Truck, RotateCcw, ChevronRight
 } from 'lucide-react';
+import ScrollReveal from '@/components/ScrollReveal';
 
 export default function Footer() {
   return (
@@ -13,45 +14,53 @@ export default function Footer() {
         
         {/* Features/Trust Bar (4 Cards) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pb-16 mb-16 border-b border-gray-100">
-          <div className="flex items-center gap-5 bg-[#fbf9f9] p-6 rounded-2xl hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 transition-all border border-[#c1c9bf]/30">
-            <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center text-green-700 shadow-sm border border-gray-100 shrink-0">
-              <Truck className="w-6 h-6" />
+          <ScrollReveal animation="fade-up" delay={0} duration={600}>
+            <div className="flex items-center gap-5 bg-[#fbf9f9] p-6 rounded-2xl hover:shadow-[0_12px_28px_rgba(0,103,71,0.08)] hover:-translate-y-1.5 transition-all duration-300 border border-[#c1c9bf]/30 hover:border-emerald-600/30 group">
+              <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center text-green-700 shadow-sm border border-gray-100 shrink-0 group-hover:scale-110 group-hover:bg-emerald-50 transition-all duration-300">
+                <Truck className="w-6 h-6" />
+              </div>
+              <div>
+                <h5 className="text-zinc-900 font-bold text-base mb-1 group-hover:text-emerald-700 transition-colors">Free Shipping</h5>
+                <p className="text-zinc-500 text-sm">On orders over ₹4,999</p>
+              </div>
             </div>
-            <div>
-              <h5 className="text-zinc-900 font-bold text-base mb-1">Free Shipping</h5>
-              <p className="text-zinc-500 text-sm">On orders over ₹4,999</p>
-            </div>
-          </div>
+          </ScrollReveal>
           
-          <div className="flex items-center gap-5 bg-[#fbf9f9] p-6 rounded-2xl hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 transition-all border border-[#c1c9bf]/30">
-            <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center text-green-700 shadow-sm border border-gray-100 shrink-0">
-              <RotateCcw className="w-6 h-6" />
+          <ScrollReveal animation="fade-up" delay={100} duration={600}>
+            <div className="flex items-center gap-5 bg-[#fbf9f9] p-6 rounded-2xl hover:shadow-[0_12px_28px_rgba(0,103,71,0.08)] hover:-translate-y-1.5 transition-all duration-300 border border-[#c1c9bf]/30 hover:border-emerald-600/30 group">
+              <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center text-green-700 shadow-sm border border-gray-100 shrink-0 group-hover:scale-110 group-hover:bg-emerald-50 transition-all duration-300">
+                <RotateCcw className="w-6 h-6" />
+              </div>
+              <div>
+                <h5 className="text-zinc-900 font-bold text-base mb-1 group-hover:text-emerald-700 transition-colors">Free Returns</h5>
+                <p className="text-zinc-500 text-sm">30 days return policy</p>
+              </div>
             </div>
-            <div>
-              <h5 className="text-zinc-900 font-bold text-base mb-1">Free Returns</h5>
-              <p className="text-zinc-500 text-sm">30 days return policy</p>
-            </div>
-          </div>
+          </ScrollReveal>
           
-          <div className="flex items-center gap-5 bg-[#fbf9f9] p-6 rounded-2xl hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 transition-all border border-[#c1c9bf]/30">
-            <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center text-green-700 shadow-sm border border-gray-100 shrink-0">
-              <ShieldCheck className="w-6 h-6" />
+          <ScrollReveal animation="fade-up" delay={200} duration={600}>
+            <div className="flex items-center gap-5 bg-[#fbf9f9] p-6 rounded-2xl hover:shadow-[0_12px_28px_rgba(0,103,71,0.08)] hover:-translate-y-1.5 transition-all duration-300 border border-[#c1c9bf]/30 hover:border-emerald-600/30 group">
+              <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center text-green-700 shadow-sm border border-gray-100 shrink-0 group-hover:scale-110 group-hover:bg-emerald-50 transition-all duration-300">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <div>
+                <h5 className="text-zinc-900 font-bold text-base mb-1 group-hover:text-emerald-700 transition-colors">Secure Payment</h5>
+                <p className="text-zinc-500 text-sm">100% secure checkout</p>
+              </div>
             </div>
-            <div>
-              <h5 className="text-zinc-900 font-bold text-base mb-1">Secure Payment</h5>
-              <p className="text-zinc-500 text-sm">100% secure checkout</p>
-            </div>
-          </div>
+          </ScrollReveal>
           
-          <div className="flex items-center gap-5 bg-[#fbf9f9] p-6 rounded-2xl hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 transition-all border border-[#c1c9bf]/30">
-            <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center text-green-700 shadow-sm border border-gray-100 shrink-0">
-              <Clock className="w-6 h-6" />
+          <ScrollReveal animation="fade-up" delay={300} duration={600}>
+            <div className="flex items-center gap-5 bg-[#fbf9f9] p-6 rounded-2xl hover:shadow-[0_12px_28px_rgba(0,103,71,0.08)] hover:-translate-y-1.5 transition-all duration-300 border border-[#c1c9bf]/30 hover:border-emerald-600/30 group">
+              <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center text-green-700 shadow-sm border border-gray-100 shrink-0 group-hover:scale-110 group-hover:bg-emerald-50 transition-all duration-300">
+                <Clock className="w-6 h-6" />
+              </div>
+              <div>
+                <h5 className="text-zinc-900 font-bold text-base mb-1 group-hover:text-emerald-700 transition-colors">24/7 Support</h5>
+                <p className="text-zinc-500 text-sm">Dedicated support team</p>
+              </div>
             </div>
-            <div>
-              <h5 className="text-zinc-900 font-bold text-base mb-1">24/7 Support</h5>
-              <p className="text-zinc-500 text-sm">Dedicated support team</p>
-            </div>
-          </div>
+          </ScrollReveal>
         </div>
 
         {/* Main Footer Content */}
@@ -169,7 +178,24 @@ export default function Footer() {
             © {new Date().getFullYear()} LORVEN GOLF. All rights reserved.
           </p>
           <p className="text-gray-400 text-sm font-medium text-center md:text-right">
-            Developed by <span className="font-bold text-black">Abhivorn Technologies</span> & <span className="font-bold text-black">Digilevelup</span>
+            Developed by{' '}
+            <a
+              href="https://www.abhivorn.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold text-black hover:text-green-700 hover:underline transition-colors"
+            >
+              Abhivorn Technologies
+            </a>{' '}
+            &{' '}
+            <a
+              href="https://www.digilevelup.in/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold text-black hover:text-green-700 hover:underline transition-colors"
+            >
+              Digilevelup
+            </a>
           </p>
         </div>
 

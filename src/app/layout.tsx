@@ -16,15 +16,22 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | GolfPro",
-    default: "GolfPro - Premium Golf Equipment, Clubs, and Apparel",
+    template: "%s | LORVEN GOLF",
+    default: "LORVEN GOLF - Premium Golf Equipment, Clubs, and Apparel",
   },
-  description: "Shop the best selection of premium golf equipment, clubs, bags, shoes, and apparel from top brands at GolfPro.",
+  description: "Shop the best selection of premium golf equipment, clubs, bags, shoes, and apparel from top brands at Lorven Golf.",
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico' }
+    ],
+    apple: '/apple-icon.png',
+  },
   openGraph: {
-    title: "GolfPro",
+    title: "LORVEN GOLF",
     description: "Shop the best selection of premium golf equipment.",
     type: "website",
-    siteName: "GolfPro",
+    siteName: "LORVEN GOLF",
   },
 };
 

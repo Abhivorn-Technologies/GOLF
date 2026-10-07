@@ -5,6 +5,8 @@ import ProductCard from "@/components/ProductCard";
 import { useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
+import ScrollReveal from "@/components/ScrollReveal";
+
 export default function NewArrivalsGrid() {
   const searchParams = useSearchParams();
   const [products, setProducts] = useState<any[]>([]);
@@ -40,8 +42,10 @@ export default function NewArrivalsGrid() {
       {/* Product Grid - 3 Column Layout for New Arrivals page */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-[32px] gap-y-[32px] mb-[48px]">
         {products.length > 0 ? (
-          products.map((product) => (
-            <ProductCard key={product.id} product={product} />
+          products.map((product, idx) => (
+            <ScrollReveal key={product.id || idx} animation="fade-up" delay={idx * 80} duration={600}>
+              <ProductCard product={product} />
+            </ScrollReveal>
           ))
         ) : (
           <div className="col-span-1 md:col-span-2 lg:col-span-3 py-16 flex flex-col items-center justify-center text-center">

@@ -20,6 +20,46 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Smooth card elevations and micro-interactions */
+.card-hover-lift {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+}
+
+.card-hover-lift:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 35px -10px rgba(0, 103, 71, 0.08), 0 10px 20px -5px rgba(0, 0, 0, 0.06);
+}
+
+/* Light sweep effect on interactive cards */
+@keyframes lightSweep {
+  0% { transform: translateX(-150%) skewX(-20deg); }
+  100% { transform: translateX(250%) skewX(-20deg); }
+}
+
+.hover-sweep {
+  position: relative;
+  overflow: hidden;
+}
+
+.hover-sweep::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 50%;
+  height: 200%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transform: translateX(-150%) skewX(-20deg);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.hover-sweep:hover::after {
+  opacity: 1;
+  animation: lightSweep 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 /* Custom Slider Styling */
 .custom-slider {
   -webkit-appearance: none !important;

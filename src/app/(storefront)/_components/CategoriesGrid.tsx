@@ -19,6 +19,8 @@ function resolveImgSrc(src?: string | null) {
   return `/images/${clean}`;
 }
 
+import ScrollReveal from '@/components/ScrollReveal';
+
 export default function CategoriesGrid({ categories: passedCategories }: CategoriesGridProps) {
   // Use passed categories, or fallback to empty
   const categories = passedCategories && passedCategories.length > 0
@@ -39,48 +41,68 @@ export default function CategoriesGrid({ categories: passedCategories }: Categor
   };
 
   return (
-    <section className="w-full py-16 bg-white">
-      <div className="max-w-7xl mx-auto px-8">
-        <div className="mb-10 max-w-2xl mx-auto text-center flex flex-col items-center">
-          <h2 className="text-4xl font-black text-zinc-900 tracking-tight uppercase mb-4">All Categories</h2>
-          <div className="w-12 h-1 bg-green-600 rounded-full mb-4"></div>
-          <p className="text-zinc-600 text-xl font-medium">Shop directly from our active inventory.</p>
-        </div>
+    <section className="w-full py-20 bg-white border-t border-gray-100 overflow-hidden">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        
+        {/* Section Header with Scroll Reveal */}
+        <ScrollReveal animation="fade-up" duration={700}>
+          <div className="mb-14 max-w-2xl mx-auto text-center flex flex-col items-center">
+            <span className="text-xs font-bold uppercase tracking-widest text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100 mb-3">
+              Browse Categories
+            </span>
+            <h2 className="text-3xl md:text-4xl font-black text-zinc-900 tracking-tight uppercase mb-3">
+              All Categories
+            </h2>
+            <div className="w-16 h-1 bg-green-600 rounded-full mb-3"></div>
+            <p className="text-zinc-600 text-sm md:text-base font-medium">
+              Find exactly what your game needs from our curated golf selections.
+            </p>
+          </div>
+        </ScrollReveal>
 
+        {/* Categories Grid with Staggered Scroll Reveal & Dynamic Hover */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {categories.map((category, idx) => (
-            <Link key={idx} href={`/category/${category.name.toLowerCase().replace(/\s+/g, '-')}`} className={`group relative h-[360px] rounded-2xl overflow-hidden bg-zinc-100 flex flex-col justify-end p-6 border border-gray-200 transition-all duration-300 hover:border-green-500 hover:shadow-lg col-span-1 md:col-span-1 lg:col-span-1`}>
-              
-              {/* Category Icon / Placeholder */}
-              <div className="absolute top-6 left-6 w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm text-zinc-400 group-hover:text-green-600 transition-colors z-10">
-                <span className="font-bold text-lg">{category.name.charAt(0).toUpperCase()}</span>
-              </div>
-
-              {/* Background Image */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-20 bg-gradient-to-t from-zinc-900 via-zinc-900/50 to-transparent transition-opacity duration-300 z-10"></div>
-              <div className="absolute inset-0 z-0 p-8 flex items-center justify-center">
-                <img 
-                  src={resolveImgSrc(category.image)} 
-                  alt={category.name} 
-                  onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/images/golf.png'; }}
-                  className="w-full h-full object-contain mix-blend-multiply transition-transform duration-500 group-hover:scale-105" 
-                />
-              </div>
-
-              <div className="relative z-20 flex justify-between items-end bg-white/90 backdrop-blur-sm p-4 rounded-xl border border-white/50 group-hover:bg-white transition-colors">
-                <div>
-                  <h3 className="text-xl font-bold text-zinc-900 uppercase tracking-tight mb-1 group-hover:text-green-600 transition-colors">
-                    {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
-                  </h3>
-                  <p className="text-sm text-zinc-500 font-medium">{getSubtitle(category.name)}</p>
+            <ScrollReveal key={idx} animation="fade-up" delay={idx * 100} duration={650}>
+              <Link 
+                href={`/category/${category.name.toLowerCase().replace(/\s+/g, '-')}`} 
+                className="group relative h-[360px] rounded-2xl overflow-hidden bg-zinc-100 flex flex-col justify-end p-6 border border-gray-200 transition-all duration-300 hover:border-emerald-500 hover:shadow-2xl hover:-translate-y-2 block"
+              >
+                {/* Category Icon / Placeholder */}
+                <div className="absolute top-6 left-6 w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md text-zinc-600 group-hover:text-emerald-700 group-hover:scale-110 transition-all duration-300 z-10 border border-gray-100">
+                  <span className="font-extrabold text-lg">{category.name.charAt(0).toUpperCase()}</span>
                 </div>
-                <div className="bg-zinc-100 p-2 rounded-full text-zinc-400 group-hover:bg-green-600 group-hover:text-white transition-all transform group-hover:rotate-12 group-hover:scale-110 shadow-sm">
-                  <ArrowUpRight className="w-5 h-5" />
+
+                {/* Subtle Gradient Overlay on Hover */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-15 bg-gradient-to-t from-emerald-950 via-zinc-900 to-transparent transition-opacity duration-300 z-10"></div>
+                
+                {/* Background Image Area */}
+                <div className="absolute inset-0 z-0 p-8 flex items-center justify-center">
+                  <img 
+                    src={resolveImgSrc(category.image)} 
+                    alt={category.name} 
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/images/golf.png'; }}
+                    className="w-full h-full object-contain mix-blend-multiply transition-transform duration-700 ease-out group-hover:scale-110" 
+                  />
                 </div>
-              </div>
-            </Link>
+
+                {/* Bottom Card Title Info */}
+                <div className="relative z-20 flex justify-between items-end bg-white/95 backdrop-blur-md p-4 rounded-xl border border-white/60 shadow-sm group-hover:bg-white group-hover:shadow-md transition-all duration-300">
+                  <div>
+                    <h3 className="text-xl font-bold text-zinc-900 uppercase tracking-tight mb-0.5 group-hover:text-emerald-700 transition-colors">
+                      {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
+                    </h3>
+                    <p className="text-xs text-zinc-500 font-medium">{getSubtitle(category.name)}</p>
+                  </div>
+                  <div className="bg-zinc-100 p-2.5 rounded-full text-zinc-500 group-hover:bg-emerald-600 group-hover:text-white transition-all transform group-hover:rotate-45 group-hover:scale-110 shadow-sm">
+                    <ArrowUpRight className="w-4 h-4" />
+                  </div>
+                </div>
+              </Link>
+            </ScrollReveal>
           ))}
         </div>
+
       </div>
     </section>
   );

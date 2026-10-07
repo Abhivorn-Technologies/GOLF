@@ -2,6 +2,7 @@ import React, { Suspense } from 'react';
 import Footer from "@/components/Footer";
 import TopNavBar from "@/components/TopNavBar";
 import GlobalBackButton from "@/components/GlobalBackButton";
+import ScrollToTopOnRefresh from "@/components/ScrollToTopOnRefresh";
 import { getMegaMenuData } from "@/lib/filters";
 import { getPageSettings } from "@/lib/pageSettings";
 
@@ -26,6 +27,7 @@ export default async function StorefrontLayout({ children }: { children: React.R
 
   return (
     <div className="min-h-screen flex flex-col max-w-[100vw]">
+      <ScrollToTopOnRefresh />
       <TopNavBar megaMenuData={megaMenuData} utilityBar={utilityBar} />
       <Suspense fallback={null}>
         <GlobalBackButton />
