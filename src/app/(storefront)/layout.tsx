@@ -3,6 +3,7 @@ import Footer from "@/components/Footer";
 import TopNavBar from "@/components/TopNavBar";
 import GlobalBackButton from "@/components/GlobalBackButton";
 import ScrollToTopOnRefresh from "@/components/ScrollToTopOnRefresh";
+import CookieConsentBanner from "@/components/CookieConsentBanner";
 import { getMegaMenuData } from "@/lib/filters";
 import { getPageSettings } from "@/lib/pageSettings";
 
@@ -36,6 +37,7 @@ export default async function StorefrontLayout({ children }: { children: React.R
         {children}
       </main>
       <Footer />
+      <CookieConsentBanner />
     </div>
   );
 }

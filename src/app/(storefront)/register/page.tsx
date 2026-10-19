@@ -144,6 +144,18 @@ function RegisterForm() {
             </label>
           </div>
 
+          {/* Terms & Privacy Consent Notice */}
+          <p className="text-[11px] text-gray-500 leading-relaxed mb-4 text-center">
+            By clicking &quot;Create Account&quot;, you agree to our{' '}
+            <Link href="/terms" target="_blank" className="text-zinc-900 font-semibold underline hover:text-emerald-700">
+              Terms &amp; Conditions
+            </Link>{' '}
+            and acknowledge our{' '}
+            <Link href="/privacy" target="_blank" className="text-zinc-900 font-semibold underline hover:text-emerald-700">
+              Privacy Policy
+            </Link>.
+          </p>
+
           <button 
             type="submit" 
             disabled={loading}

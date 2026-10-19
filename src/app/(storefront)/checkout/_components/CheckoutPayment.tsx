@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { CreditCard } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
@@ -159,11 +160,23 @@ export default function CheckoutPayment() {
         </div>
       </div>
 
+      {/* Consent Notice */}
+      <p className="text-[12px] text-[#74777f] font-['Hanken_Grotesk'] text-center px-2">
+        By clicking &quot;Pay Now&quot;, you agree to Lorven Golf&apos;s{' '}
+        <Link href="/terms" target="_blank" className="text-black font-semibold underline hover:text-emerald-700">
+          Terms &amp; Conditions
+        </Link>{' '}
+        and confirm you have read our{' '}
+        <Link href="/privacy" target="_blank" className="text-black font-semibold underline hover:text-emerald-700">
+          Privacy Policy
+        </Link>.
+      </p>
+
       {/* Pay Now Button */}
       <button 
         onClick={handlePayNow}
         disabled={isProcessing}
-        className="mt-[16px] bg-black text-white font-['Hanken_Grotesk'] font-bold tracking-widest uppercase text-xs py-[16px] px-[32px] rounded-full w-full hover:bg-gray-800 transition-colors disabled:opacity-75 flex justify-center items-center h-[56px]"
+        className="mt-[4px] bg-black text-white font-['Hanken_Grotesk'] font-bold tracking-widest uppercase text-xs py-[16px] px-[32px] rounded-full w-full hover:bg-gray-800 transition-colors disabled:opacity-75 flex justify-center items-center h-[56px]"
       >
         {isProcessing ? (
           <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
