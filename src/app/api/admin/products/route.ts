@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Product from '@/models/Product';
 import { getServerSession } from 'next-auth';
+import { clearMegaMenuCache } from '@/lib/filters';
+import { clearProductCache } from '@/app/api/products/public/route';
 
 // Middleware-like check for admin session
 async function isAdmin(req: NextRequest) {
@@ -46,6 +48,8 @@ export async function POST(req: NextRequest) {
     }
 
     const newProduct = await Product.create(body);
+    clearMegaMenuCache();
+    clearProductCache();
     return NextResponse.json(newProduct, { status: 201 });
   } catch (error: any) {
     console.error("Product creation error:", error);

@@ -18,9 +18,22 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>(initialData?.images || []);
 
-  const [dynamicAttributes, setDynamicAttributes] = useState<{ key: string, value: string }[]>(
-    initialData?.attributes || []
-  );
+  const [dynamicAttributes, setDynamicAttributes] = useState<{ key: string, value: string }[]>(() => {
+    if (!initialData?.attributes) return [];
+    if (Array.isArray(initialData.attributes)) {
+      return initialData.attributes.map((a: any) => ({
+        key: a.key || a.name || '',
+        value: a.value || ''
+      }));
+    }
+    if (typeof initialData.attributes === 'object') {
+      return Object.entries(initialData.attributes).map(([key, value]) => ({
+        key,
+        value: String(value)
+      }));
+    }
+    return [];
+  });
   
   const [colorGroups, setColorGroups] = useState<{
     id: string;
@@ -100,6 +113,11 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
   };
 
   const addAttribute = () => setDynamicAttributes([...dynamicAttributes, { key: '', value: '' }]);
+
+  const addSpecificAttribute = (keyName: string) => {
+    if (dynamicAttributes.some(a => a.key.toLowerCase() === keyName.toLowerCase())) return;
+    setDynamicAttributes(prev => [...prev, { key: keyName, value: '' }]);
+  };
   
   const updateAttribute = (index: number, field: 'key'|'value', val: string) => {
     const newAttrs = [...dynamicAttributes];
@@ -465,35 +483,90 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
 
       {/* FULL WIDTH LOWER SECTION */}
       <div className="space-y-6">
-        
-        {/* Advanced Attributes */}
-        <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-          <div>
-            <label className="block text-xs font-bold text-gray-500 mb-2 uppercase">Style (Comma separated)</label>
-            <input name="style" defaultValue={initialData?.style} placeholder="Spiked:5, Spikeless:0" className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200" />
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-gray-500 mb-2 uppercase">Loft (Comma separated)</label>
-            <input name="loft" defaultValue={initialData?.loft} placeholder="9.0°:2, 10.5°:0" className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200" />
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-gray-500 mb-2 uppercase">Size (Comma separated)</label>
-            <input name="size" defaultValue={initialData?.size} placeholder="S:10, M:0, L:5" className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200" />
-          </div>
-        </div>
+                {/* Category Specific & Advanced Attributes */}
+        {(() => {
+          const isClubs = selectedCategory === 'clubs';
+          const isShoes = selectedCategory === 'shoes';
+          const isApparel = selectedCategory === 'apparel';
+          const showStyle = isShoes || isClubs || Boolean(initialData?.style);
+          const showLoft = isClubs || Boolean(initialData?.loft);
+          const showSize = isApparel || isShoes || Boolean(initialData?.size);
 
-        {/* Dynamic Attributes Builder */}
+          if (!showStyle && !showLoft && !showSize) return null;
+
+          return (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+              {showSize && (
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-2 uppercase">Size (Comma separated)</label>
+                  <input name="size" defaultValue={initialData?.size} placeholder="S:10, M:0, L:5" className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 outline-none focus:border-black" />
+                </div>
+              )}
+              {showStyle && (
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-2 uppercase">Style (Comma separated)</label>
+                  <input name="style" defaultValue={initialData?.style} placeholder="Spiked:5, Spikeless:0" className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 outline-none focus:border-black" />
+                </div>
+              )}
+              {showLoft && (
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-2 uppercase">Loft (Comma separated)</label>
+                  <input name="loft" defaultValue={initialData?.loft} placeholder="9.0°:2, 10.5°:0" className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 outline-none focus:border-black" />
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* Dynamic Category Attributes Builder */}
         <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-          <div className="flex justify-between items-center mb-4">
-            <label className="block text-sm font-bold text-gray-700">Dynamic Attributes</label>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+            <div>
+              <label className="block text-sm font-bold text-gray-700 capitalize">
+                {selectedCategory} Attributes
+              </label>
+              <p className="text-xs text-gray-500">
+                Attributes assigned to this category (e.g. Material, Fit, Color).
+              </p>
+            </div>
             <button 
               type="button" 
               onClick={addAttribute}
-              className="text-xs font-bold bg-black text-white px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-gray-800 transition-colors"
+              className="text-xs font-bold bg-black text-white px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-gray-800 transition-colors w-fit"
             >
-              <Plus className="w-3 h-3" /> Add Attribute
+              <Plus className="w-3 h-3" /> Add Custom Field
             </button>
           </div>
+
+          {/* Quick-add category attributes badges */}
+          {availableAttributes.length > 0 && (
+            <div className="mb-4 p-3 bg-white rounded-lg border border-gray-200">
+              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-2">
+                Available {selectedCategory.toUpperCase()} Attributes (Click to add):
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {availableAttributes.map(attr => {
+                  const alreadyAdded = dynamicAttributes.some(a => a.key.toLowerCase() === attr.toLowerCase());
+                  return (
+                    <button
+                      key={attr}
+                      type="button"
+                      disabled={alreadyAdded}
+                      onClick={() => addSpecificAttribute(attr)}
+                      className={`text-xs font-semibold px-2.5 py-1 rounded-lg border transition-all flex items-center gap-1 ${
+                        alreadyAdded
+                          ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                          : 'bg-white text-gray-700 border-gray-200 hover:border-black hover:bg-black hover:text-white shadow-sm'
+                      }`}
+                    >
+                      <span>{alreadyAdded ? '✓' : '+'}</span>
+                      <span>{attr}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           
           <div className="space-y-3">
             <datalist id="available-attributes">
@@ -502,27 +575,30 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
               ))}
             </datalist>
             {dynamicAttributes.length === 0 ? (
-              <p className="text-xs text-gray-500 italic">No custom attributes added. (e.g. Color, Material, Flex)</p>
+              <p className="text-xs text-gray-500 italic py-2">
+                No custom attributes added yet. Click any button above or click &quot;Add Custom Field&quot; to set attributes.
+              </p>
             ) : (
               dynamicAttributes.map((attr, idx) => (
                 <div key={idx} className="flex gap-2 items-center">
                   <input 
                     value={attr.key}
                     onChange={(e) => updateAttribute(idx, 'key', e.target.value)}
-                    placeholder="e.g. Color"
+                    placeholder="Attribute Name (e.g. Material)"
                     list="available-attributes"
-                    className="w-1/3 px-3 py-2 text-sm rounded-lg border border-gray-200 focus:border-black outline-none"
+                    className="w-1/3 px-3 py-2 text-sm rounded-lg border border-gray-200 focus:border-black outline-none bg-white"
                   />
                   <input 
                     value={attr.value}
                     onChange={(e) => updateAttribute(idx, 'value', e.target.value)}
-                    placeholder="e.g. Matte Black"
-                    className="flex-1 px-3 py-2 text-sm rounded-lg border border-gray-200 focus:border-black outline-none"
+                    placeholder="Attribute Value (e.g. 100% Cotton, Regular Fit)"
+                    className="flex-1 px-3 py-2 text-sm rounded-lg border border-gray-200 focus:border-black outline-none bg-white"
                   />
                   <button 
-                    type="button"
+                    type="button" 
                     onClick={() => removeAttribute(idx)}
                     className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Remove Attribute"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

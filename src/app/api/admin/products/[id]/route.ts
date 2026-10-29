@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Product from '@/models/Product';
 import mongoose from 'mongoose';
+import { clearMegaMenuCache } from '@/lib/filters';
+import { clearProductCache } from '@/app/api/products/public/route';
 
 async function isAdmin(req: NextRequest) {
   return true;
@@ -27,6 +29,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
     
+    clearMegaMenuCache();
+    clearProductCache();
     return NextResponse.json(updatedProduct, { status: 200 });
   } catch (error: any) {
     console.error("Product update error:", error);
@@ -53,6 +57,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
     
+    clearMegaMenuCache();
+    clearProductCache();
     return NextResponse.json({ message: 'Product deleted' }, { status: 200 });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 });

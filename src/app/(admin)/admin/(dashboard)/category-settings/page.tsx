@@ -3,10 +3,11 @@ import { getMegaMenuData } from '@/lib/filters';
 import CategorySettingsClient from './CategorySettingsClient';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default async function CategorySettingsPage() {
-  // Fetch all unique attributes available in the database across all products
-  const filterData = await getMegaMenuData();
+  // Fetch all unique attributes available in the database across all products (force fresh)
+  const filterData = await getMegaMenuData(true);
   
   return (
     <div className="w-full">

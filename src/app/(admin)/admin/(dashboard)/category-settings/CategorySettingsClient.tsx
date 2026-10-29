@@ -95,7 +95,8 @@ export default function CategorySettingsClient({ filterData }: { filterData: any
     }
   };
 
-  const categoryData = filterData[activeTab];
+  const matchedKey = Object.keys(filterData || {}).find(k => k.toLowerCase() === activeTab.toLowerCase()) || activeTab;
+  const categoryData = filterData?.[matchedKey];
   const availableAttributes = categoryData?.attributes ? Object.keys(categoryData.attributes) : [];
 
   return (

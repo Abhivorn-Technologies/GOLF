@@ -6,6 +6,11 @@ let cachedMegaMenuData: Record<string, any> | null = null;
 let lastCacheTime = 0;
 const CACHE_TTL_MS = 300000; // 5 minutes cache
 
+export function clearMegaMenuCache() {
+  cachedMegaMenuData = null;
+  lastCacheTime = 0;
+}
+
 function formatBrandName(name: string): string {
   if (!name) return '';
   const trimmed = name.trim();
@@ -43,9 +48,9 @@ function normalizeGender(g: string): string {
   return g.trim();
 }
 
-export async function getMegaMenuData() {
+export async function getMegaMenuData(forceRefresh = false) {
   const now = Date.now();
-  if (cachedMegaMenuData && (now - lastCacheTime < CACHE_TTL_MS)) {
+  if (!forceRefresh && cachedMegaMenuData && (now - lastCacheTime < CACHE_TTL_MS)) {
     return cachedMegaMenuData;
   }
 
